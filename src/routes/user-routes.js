@@ -1,17 +1,14 @@
 import { Router } from "express";
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserprofilePicture, updateUserCoverImage, additionalInfo } from "../controllers/user-controller.js";
+import { changeCurrentPassword, getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserprofilePicture } from "../controllers/user-controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
 router.route("/register").post(
-  upload.fields([
-    { name: "profilePicture", maxCount: 1 },
-  ]), 
-  registerUser 
+  registerUser
 );
-  
+
 router.route("/login").post(loginUser);
 
 //secured routes
@@ -26,16 +23,6 @@ router.route("/profilePicture").patch(verifyJWT,upload.single("profilePicture"),
 router.route('/name').get((req,res)=>{
 res.json({name:'abhisehkkk'})
 })
-router.route("/cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCoverImage);
-router.route("/c/:username").get(verifyJWT,getUserChannelProfile);
-router.route("/history").get(verifyJWT,getWatchHistory);
-router.route('/additionalInfo').post(
-  upload.fields([
-    { name: 'DOCUMENTS', maxCount: 10 },   // Adjust maxCount based on your needs
-    { name: 'UPLOADSPHOTOS', maxCount: 10 } // Adjust maxCount based on your needs
-  ]),
-  additionalInfo
-);
 
 
 export default router;

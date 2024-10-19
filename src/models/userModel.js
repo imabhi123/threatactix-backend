@@ -1,82 +1,83 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose, {Schema} from "mongoose";
+import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 
-
-const userSchema = new Schema({
-    USER_ID: {
-        type: String,
-        required: true,
+const userSchema = new Schema(
+    {
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowecase: true,
+            trim: true, 
+        },
+        firstName: {
+            type: String,
+            required: true,
+            trim: true, 
+            index: true
+        },
+        lastName: {
+          type: String,
+          required: true,
+          trim: true, 
+          index: true
       },
-    FIRST_NAME: {
-      type: String,
-      required: true,
-      maxLength: 31,
-    },
-    LAST_NAME: {
-      type: String,
-      maxLength: 31,
-    },
-    FATHER_NAME: {
-      type: String,
-      maxLength: 31,
-    },
-    DATE_OF_BIRTH: {
-      type: String,
-      maxLength: 31,
-    },
-    ADDRESS: {
-      type: String,
-    },
-    STATE: {
-      type: String,
-    },
-    DISTRICT: {
-      type: String,
-    },
-    SUB_DISTRICT: {
-      type: String,
-    },
-    VILLAGE: {
-      type: String,
-    },
-    EMAIL_ADDRESS: {
-      type: String,
-      required: true,
-      maxLength: 255,
-    },
-    PHONE_NUMBER:{
-      type:String,
-      required:true
-    },
-    IMAGE_URL:{
-      type:String,
-      default:""
-    },
-    GENDER:{
-      type:String,
-      enum:["MALE" , "FEMALE" , "OTHER"],
-      default:"MALE"
-    },
-    FCM_TOKEN:{
-      type:String,
-      default:""
-    },
-    TEAM_ID: {
-      type: String,
-      default:""
-    },
-    BLOCKED:{
-      type:Boolean,
-      default:false
-    },
-    CREATED_AT: {
-      type:Date
-    },
-    UPDATED_AT: {
-      type: Date
-    }
-  },
-  { versionKey: false }
-);
+        avatar: {
+            type: String, // cloudinary url
+            // required: true,
+        },
+        
+        password: {
+            type: String,
+            required: [true, 'Password is required']
+        },
+        refreshToken: {
+            type: String
+        }
 
-const User = mongoose.model("users", userSchema);
-export  {User};
+    },
+    {
+        timestamps: true
+    }
+)
+
+userSchema.pre("save", async function (next) {
+    if(!this.isModified("password")) return next();
+
+    this.password = await bcrypt.hash(this.password, 10)
+    next();
+})
+
+userSchema.methods.isPasswordCorrect = async function(password){
+    return await bcrypt.compare(password, this.password)
+}
+
+userSchema.methods.generateAccessToken = function(){
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullName: this.fullName
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
+}
+userSchema.methods.generateRefreshToken = function(){
+    return jwt.sign(
+        {
+            _id: this._id,
+            
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
+
+export const User = mongoose.model("User", userSchema)
