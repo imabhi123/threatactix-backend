@@ -57,12 +57,33 @@ export const createIncident = async (req, res) => {
 // Get all Incidents
 export const getAllIncidents = async (req, res) => {
   try {
-    const incidents = await Incident.find();
-    res.status(200).json({success:true,data:incidents});
+    // Extract start and end from the query parameters
+    const { start = 0, end = 10 } = req.query; // Default to 0 and 10 if not provided
+
+    // Ensure that start and end are integers
+    const startIndex = parseInt(start);
+    const endIndex = parseInt(end);
+
+    // Fetch incidents with pagination
+    const n=await Incident.find();
+    const incidents = await Incident.find()
+      .skip(startIndex) // Skip documents to start pagination
+      .limit(endIndex - startIndex); // Limit the number of documents returned
+
+    res.status(200).json({
+      success: true,
+      data: incidents,
+      pagination: {
+        start: startIndex,
+        end: endIndex,
+        count: n.length, // Number of incidents returned
+      },
+    });
   } catch (error) {
     handleServerError(res, error, 'Error retrieving incidents');
   }
 };
+
 
 // Get a single Incident by ID
 export const getIncidentById = async (req, res) => {
@@ -119,8 +140,8 @@ export const searchIncidents = async (req, res) => {
       endDate,
       sortBy = 'publicationDate', // default sort by publicationDate
       order = 'desc', // default sort order
-      limit = 10, // default pagination limit
-      page = 1, // default page
+      startIndex = 0, // default start index
+      endIndex = 10, // default end index
       fields, // optional field selection
     } = req.query;
 
@@ -148,16 +169,17 @@ export const searchIncidents = async (req, res) => {
       }
     }
 
-    // Pagination and sorting setup
-    const skip = (page - 1) * limit; // Calculate the skip value for pagination
+    // Pagination based on startIndex and endIndex
+    const skip = parseInt(startIndex);
+    const limit = parseInt(endIndex) - parseInt(startIndex); // Items to fetch between startIndex and endIndex
     const sortOrder = order === 'asc' ? 1 : -1;
 
     // Fetch incidents with pagination, sorting, and optional field selection
     const incidents = await Incident.find(searchCriteria)
       .select(fields ? fields.split(',').join(' ') : '') // Select specific fields if provided
       .sort({ [sortBy]: sortOrder }) // Sorting by the field (default: publicationDate)
-      .skip(skip) // Pagination skip
-      .limit(parseInt(limit)); // Pagination limit
+      .skip(skip) // Pagination skip based on startIndex
+      .limit(limit); // Pagination limit based on difference between endIndex and startIndex
 
     // Count total number of incidents matching the search criteria (for pagination meta)
     const totalIncidents = await Incident.countDocuments(searchCriteria);
@@ -165,8 +187,8 @@ export const searchIncidents = async (req, res) => {
     // Return the results along with pagination information
     res.status(200).json({
       total: totalIncidents,
-      page: parseInt(page),
-      limit: parseInt(limit),
+      startIndex: parseInt(startIndex),
+      endIndex: parseInt(endIndex),
       totalPages: Math.ceil(totalIncidents / limit),
       incidents,
     });
@@ -290,32 +312,52 @@ export const recentMalwares = async (req, res) => {
 
 export const getMostAffectedCountries = async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
-    const allcountries=await Incident.find({});
-    console.log(allcountries[0].victims)
+    // Default startDate and endDate values
+    const { startDate = '2023-10-12', endDate = Date.now() } = req.body;
 
+    // Parse dates correctly
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    console.log(start,end)
+
+    // Ensure both dates are valid
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: "Invalid date format" });
+    }
+
+    const allData=await Incident.find({});
+    console.log(allData);
+
+    // Retrieve and aggregate the countries affected within the date range
     const countries = await Incident.aggregate([
       {
         $match: {
-          publicationDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
+          publicationDate: { $gte: start, $lte: end }
         }
       },
       { $unwind: "$victims" }, // Unwind the array of victims
       {
         $group: {
-          _id: "$victims.country", // Group by country
-          count: { $sum: 1 }       // Count the occurrences
+          _id: "$victims.country", // Group by victim's country
+          count: { $sum: 1 }       // Count the occurrences of each country
         }
       },
       { $sort: { count: -1 } }    // Sort by count in descending order
     ]);
-    console.log(countries,'abhishek')
 
+    // Log the result for debugging
+    console.log(countries);
+
+    // Return the result
     return res.status(200).json(countries);
   } catch (error) {
+    console.error("Error fetching countries:", error);
     return res.status(500).json({ message: "An error occurred", error: error.message });
   }
 };
+
+
 
 export const getMostActiveThreatActors = async (req, res) => {
   try {
