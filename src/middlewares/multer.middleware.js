@@ -16,19 +16,24 @@ const storage = multer.diskStorage({
 
 // File filter function to allow images and PDFs
 const fileFilter = (req, file, cb) => {
-  console.log(file,file.mimetype,'--->abhishek')
+  console.log(file, file.mimetype, '--->abhishek');
+  
   if (
-    file.mimetype === "image/jpeg" || // for jpeg files
+    file.mimetype === "image/jpeg" ||  // for jpeg files
     file.mimetype === "image/jpg" ||   // for jpg files
     file.mimetype === "image/png" ||   // for png files
     file.mimetype === "image/gif" ||   // for gif files
-    file.mimetype === "application/pdf" // for pdf files
+    file.mimetype === "application/pdf" || // for pdf files
+    file.mimetype === "application/vnd.ms-excel" ||  // for .xls (Excel 97-2003)
+    file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||  // for .xlsx (Excel)
+    file.mimetype === "text/csv"  // for .csv files
   ) {
-    cb(null, true);
+    cb(null, true);  // Accept file
   } else {
-    cb(new Error("Only images (jpeg, jpg, png, gif) and PDFs are allowed!"), false);
+    cb(new Error("Only images (jpeg, jpg, png, gif), PDFs, Excel, and CSV files are allowed!"), false);
   }
 };
+
 
 // Multer upload configuration
 const upload = multer({

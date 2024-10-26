@@ -1,9 +1,68 @@
 // Import the Incident model
 import Incident from '../models/IncidentSchema.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { parseFile } from '../utils/parseFile.js';
+import { transformIncidentData } from '../utils/utilityfunc.js';
+
+// Manually define __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Utility function to handle server errors
 const handleServerError = (res, error, message) => {
   res.status(500).json({ message, error });
+};
+
+export const createFuncUtil = async (data,arr) => {
+  try {
+    // Destructure the necessary fields from the request body
+    const {
+      title,
+      url,
+      threatActor,
+      rawContent,
+      publicationDate,
+      plannedPublicationDate,
+      category,
+      network,
+      victims,
+      images,
+    } = data;
+
+    // Validate that required fields are provided
+    if (!title || !url || !threatActor || !rawContent || !publicationDate || !category || !network || !victims) {
+      arr.push('error');
+      return;
+      // return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Create a new Incident instance
+    const newIncident = new Incident({
+      title,
+      url,
+      threatActor,
+      rawContent,
+      publicationDate,
+      plannedPublicationDate, // Optional
+      category,
+      network,
+      victims,
+      images, // Optional
+    });
+
+    // Save the incident to the database
+    await newIncident.save();
+    arr.push('success')
+
+    // Return success response
+    // return res.status(201).json({ message: 'Incident created successfully', incident: newIncident });
+  } catch (error) {
+    // Handle any errors that occur during the process
+    console.error('Error creating incident:', error);
+    return res.status(500).json({ message: 'Server error, could not create incident' });
+  }
 };
 
 // Create a new Incident
@@ -54,6 +113,74 @@ export const createIncident = async (req, res) => {
   }
 };
 
+export const updateStatus= async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the incident by its ID
+    const incident = await Incident.findById(id);
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    // Toggle the status
+    incident.status = !incident.status;
+
+    // Save the updated incident
+    await incident.save();
+
+    return res.status(200).json({
+      message: "Incident status updated successfully",
+      incident,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error updating status", error });
+  }
+};
+
+export const createIncidentByUploadingFile= async (req, res) => {
+  try {
+    const file = req.file;
+    console.log(file)
+    if (!file) {
+      return res.status(400).send('No file uploaded.');
+    }
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    if (!validExtensions.includes(ext)) {
+      return res.status(400).send('Invalid file type. Upload only Excel or CSV files.');
+    }
+
+    const filePath = path.join(__dirname, '../..','uploads', file.filename);
+
+    // Parse the file based on its type
+    const extractedData = await parseFile(filePath, ext);
+    for(let i=0;i<extractedData?.length;i++){
+      extractedData[i]=transformIncidentData(extractedData[i]);
+    }
+
+    const arr=[];
+    for(let i=0;i<extractedData.length;i++){
+      await createFuncUtil(extractedData[i],arr);
+    }
+
+
+
+    res.status(200).json({
+      message: 'File processed successfully!',
+      data: {extractedData,arr},
+    });
+
+    // Clean up the file after processing
+    fs.unlinkSync(filePath);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error processing file.');
+  }
+}
+
 // Get all Incidents
 export const getAllIncidents = async (req, res) => {
   try {
@@ -83,7 +210,6 @@ export const getAllIncidents = async (req, res) => {
     handleServerError(res, error, 'Error retrieving incidents');
   }
 };
-
 
 // Get a single Incident by ID
 export const getIncidentById = async (req, res) => {
@@ -357,8 +483,6 @@ export const getMostAffectedCountries = async (req, res) => {
   }
 };
 
-
-
 export const getMostActiveThreatActors = async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
@@ -423,5 +547,7 @@ export default {
   removeImageFromIncident,
   getMostActiveThreatActors,
   getMostAffectedCountries,
-  getMostTargetedIndustries
+  getMostTargetedIndustries,
+  updateStatus,
+  createIncidentByUploadingFile
 };
