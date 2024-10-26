@@ -184,16 +184,20 @@ export const createIncidentByUploadingFile= async (req, res) => {
 // Get all Incidents
 export const getAllIncidents = async (req, res) => {
   try {
-    // Extract start and end from the query parameters
-    const { start = 0, end = 10 } = req.query; // Default to 0 and 10 if not provided
+    // Extract start, end, and category from the query parameters
+    const { start = 0, end = 10, category } = req.query; // Default to 0 and 10 if start and end are not provided
 
     // Ensure that start and end are integers
     const startIndex = parseInt(start);
     const endIndex = parseInt(end);
 
-    // Fetch incidents with pagination
-    const n=await Incident.find();
-    const incidents = await Incident.find()
+    // Build the query conditionally based on the category
+    const query = category ? { category } : {};
+    console.log(query);
+    // Fetch incidents with pagination and optional category filter
+    const totalIncidents = await Incident.find(query).countDocuments();
+
+    const incidents = await Incident.find(query)
       .skip(startIndex) // Skip documents to start pagination
       .limit(endIndex - startIndex); // Limit the number of documents returned
 
@@ -203,13 +207,14 @@ export const getAllIncidents = async (req, res) => {
       pagination: {
         start: startIndex,
         end: endIndex,
-        count: n.length, // Number of incidents returned
+        count: totalIncidents, // Total number of incidents matching the query
       },
     });
   } catch (error) {
     handleServerError(res, error, 'Error retrieving incidents');
   }
 };
+
 
 // Get a single Incident by ID
 export const getIncidentById = async (req, res) => {
