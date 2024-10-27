@@ -263,69 +263,50 @@ export const deleteIncident = async (req, res) => {
 // Search Incidents by category or network
 export const searchIncidents = async (req, res) => {
   try {
-    const {
-      category,
-      network,
-      threatActorName,
-      startDate,
-      endDate,
-      sortBy = 'publicationDate', // default sort by publicationDate
-      order = 'desc', // default sort order
-      startIndex = 0, // default start index
-      endIndex = 10, // default end index
-      fields, // optional field selection
-    } = req.query;
+    // Extract query parameters from the request
+    const { title, status, category, threatActorName, victimCountry, victimIndustry } = req.query;
 
-    const searchCriteria = {};
+    // Build a dynamic query object based on the provided parameters
+    const searchQuery = {};
 
-    // Add search criteria dynamically
+    if (title) {
+      searchQuery.title = { $regex: title, $options: "i" }; // Case-insensitive search
+    }
+    
+    if (status !== undefined) {
+      searchQuery.status = status === "true"; // Convert string to boolean
+    }
+
     if (category) {
-      searchCriteria.category = new RegExp(category, 'i'); // Case-insensitive partial match
+      searchQuery.category = { $regex: category, $options: "i" }; // Case-insensitive search
     }
-    if (network) {
-      searchCriteria.network = new RegExp(network, 'i');
-    }
+
     if (threatActorName) {
-      searchCriteria['threatActor.name'] = new RegExp(threatActorName, 'i');
+      searchQuery["threatActor.name"] = { $regex: threatActorName, $options: "i" }; // Case-insensitive search
     }
 
-    // Date range filtering (optional)
-    if (startDate || endDate) {
-      searchCriteria.publicationDate = {};
-      if (startDate) {
-        searchCriteria.publicationDate.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        searchCriteria.publicationDate.$lte = new Date(endDate);
-      }
+    if (victimCountry) {
+      searchQuery["victims.country"] = { $regex: victimCountry, $options: "i" }; // Case-insensitive search
     }
 
-    // Pagination based on startIndex and endIndex
-    const skip = parseInt(startIndex);
-    const limit = parseInt(endIndex) - parseInt(startIndex); // Items to fetch between startIndex and endIndex
-    const sortOrder = order === 'asc' ? 1 : -1;
+    if (victimIndustry) {
+      searchQuery["victims.industry"] = { $regex: victimIndustry, $options: "i" }; // Case-insensitive search
+    }
 
-    // Fetch incidents with pagination, sorting, and optional field selection
-    const incidents = await Incident.find(searchCriteria)
-      .select(fields ? fields.split(',').join(' ') : '') // Select specific fields if provided
-      .sort({ [sortBy]: sortOrder }) // Sorting by the field (default: publicationDate)
-      .skip(skip) // Pagination skip based on startIndex
-      .limit(limit); // Pagination limit based on difference between endIndex and startIndex
+    // Perform the search using Mongoose
+    const incidents = await Incident.find(searchQuery).sort({ createdAt: -1 }); // Sorting by the newest first
 
-    // Count total number of incidents matching the search criteria (for pagination meta)
-    const totalIncidents = await Incident.countDocuments(searchCriteria);
-
-    // Return the results along with pagination information
+    // Return the search results
     res.status(200).json({
-      total: totalIncidents,
-      startIndex: parseInt(startIndex),
-      endIndex: parseInt(endIndex),
-      totalPages: Math.ceil(totalIncidents / limit),
-      incidents,
+      success: true,
+      data: incidents,
     });
   } catch (error) {
-    console.error('Error searching incidents:', error);
-    res.status(500).json({ message: 'Error searching incidents' });
+    console.error("Error searching incidents:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 
