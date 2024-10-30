@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const campaignSchema = new Schema(
-  {
+  { 
     name: {
       type: String,
       required: [true, "Campaign name is required"],
