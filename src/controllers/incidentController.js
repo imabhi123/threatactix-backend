@@ -1,10 +1,10 @@
 // Import the Incident model
-import Incident from '../models/IncidentSchema.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { parseFile } from '../utils/parseFile.js';
-import { transformIncidentData } from '../utils/utilityfunc.js';
+import Incident from "../models/IncidentSchema.js";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { parseFile } from "../utils/parseFile.js";
+import { transformIncidentData } from "../utils/utilityfunc.js";
 
 // Manually define __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -15,57 +15,72 @@ const handleServerError = (res, error, message) => {
   res.status(500).json({ message, error });
 };
 
-export const createFuncUtil = async (data,arr) => {
+// export const createFuncUtil = async (data,arr) => {
+//   try {
+//     // Destructure the necessary fields from the request body
+//     const {
+//       title,
+//       url,
+//       threatActor,
+//       rawContent,
+//       publicationDate,
+//       plannedPublicationDate,
+//       category,
+//       network,
+//       victims,
+//       images,
+//     } = data;
+
+//     // Validate that required fields are provided
+//     if (!title || !url || !threatActor || !rawContent || !publicationDate || !category || !network || !victims) {
+//       arr.push('error');
+//       return;
+//       // return res.status(400).json({ message: 'Missing required fields' });
+//     }
+
+//     // Create a new Incident instance
+//     const newIncident = new Incident({
+//       title,
+//       url,
+//       threatActor,
+//       rawContent,
+//       publicationDate,
+//       plannedPublicationDate, // Optional
+//       category,
+//       network,
+//       victims,
+//       images, // Optional
+//     });
+
+//     // Save the incident to the database
+//     await newIncident.save();
+//     arr.push('success')
+
+//     // Return success response
+//     // return res.status(201).json({ message: 'Incident created successfully', incident: newIncident });
+//   } catch (error) {
+//     // Handle any errors that occur during the process
+//     console.error('Error creating incident:', error);
+//     return res.status(500).json({ message: 'Server error, could not create incident' });
+//   }
+// };
+
+// Create a new Incident
+
+export const createFuncUtil = async (data,userId) => {
   try {
-    // Destructure the necessary fields from the request body
-    const {
-      title,
-      url,
-      threatActor,
-      rawContent,
-      publicationDate,
-      plannedPublicationDate,
-      category,
-      network,
-      victims,
-      images,
-    } = data;
-
-    // Validate that required fields are provided
-    if (!title || !url || !threatActor || !rawContent || !publicationDate || !category || !network || !victims) {
-      arr.push('error');
-      return;
-      // return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    // Create a new Incident instance
-    const newIncident = new Incident({
-      title,
-      url,
-      threatActor,
-      rawContent,
-      publicationDate,
-      plannedPublicationDate, // Optional
-      category,
-      network,
-      victims,
-      images, // Optional
+    const newExcelData = new Incident({
+      sheetName: "Incident Data",
+      data: [data],
+      creator:userId
     });
 
-    // Save the incident to the database
-    await newIncident.save();
-    arr.push('success')
-
-    // Return success response
-    // return res.status(201).json({ message: 'Incident created successfully', incident: newIncident });
+    await newExcelData.save();
   } catch (error) {
-    // Handle any errors that occur during the process
-    console.error('Error creating incident:', error);
-    return res.status(500).json({ message: 'Server error, could not create incident' });
+    console.error("Error saving data:", error);
   }
 };
 
-// Create a new Incident
 export const createIncident = async (req, res) => {
   try {
     // Destructure the necessary fields from the request body
@@ -83,8 +98,17 @@ export const createIncident = async (req, res) => {
     } = req.body;
 
     // Validate that required fields are provided
-    if (!title || !url || !threatActor || !rawContent || !publicationDate || !category || !network || !victims) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    if (
+      !title ||
+      !url ||
+      !threatActor ||
+      !rawContent ||
+      !publicationDate ||
+      !category ||
+      !network ||
+      !victims
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     // Create a new Incident instance
@@ -105,15 +129,22 @@ export const createIncident = async (req, res) => {
     await newIncident.save();
 
     // Return success response
-    return res.status(201).json({ message: 'Incident created successfully', incident: newIncident });
+    return res
+      .status(201)
+      .json({
+        message: "Incident created successfully",
+        incident: newIncident,
+      });
   } catch (error) {
     // Handle any errors that occur during the process
-    console.error('Error creating incident:', error);
-    return res.status(500).json({ message: 'Server error, could not create incident' });
+    console.error("Error creating incident:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error, could not create incident" });
   }
 };
 
-export const updateStatus= async (req, res) => {
+export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -138,50 +169,93 @@ export const updateStatus= async (req, res) => {
   }
 };
 
-export const createIncidentByUploadingFile= async (req, res) => {
+// export const createIncidentByUploadingFile= async (req, res) => {
+//   try {
+//     const file = req.file;
+//     console.log(file)
+//     if (!file) {
+//       return res.status(400).send('No file uploaded.');
+//     }
+
+//     const ext = path.extname(file.originalname).toLowerCase();
+//     const validExtensions = ['.xlsx', '.xls', '.csv'];
+//     if (!validExtensions.includes(ext)) {
+//       return res.status(400).send('Invalid file type. Upload only Excel or CSV files.');
+//     }
+
+//     const filePath = path.join(__dirname, '../..','uploads', file.filename);
+
+//     // Parse the file based on its type
+//     const extractedData = await parseFile(filePath, ext);
+//     for(let i=0;i<extractedData?.length;i++){
+//       extractedData[i]=transformIncidentData(extractedData[i]);
+//     }
+
+//     const arr=[];
+//     for(let i=0;i<extractedData.length;i++){
+//       await createFuncUtil(extractedData[i],arr);
+//     }
+
+//     res.status(200).json({
+//       message: 'File processed successfully!',
+//       data: {extractedData,arr},
+//     });
+
+//     // Clean up the file after processing
+//     fs.unlinkSync(filePath);
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Error processing file.');
+//   }
+// }
+
+// Get all Incidents
+
+export const createIncidentByUploadingFile = async (req, res) => {
   try {
     const file = req.file;
-    console.log(file)
+    const { userId } = req.body;
+    console.log("abhishek", userId,req.body);
     if (!file) {
-      return res.status(400).send('No file uploaded.');
+      return res.status(400).send("No file uploaded.");
     }
 
     const ext = path.extname(file.originalname).toLowerCase();
-    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const validExtensions = [".xlsx", ".xls", ".csv"];
     if (!validExtensions.includes(ext)) {
-      return res.status(400).send('Invalid file type. Upload only Excel or CSV files.');
+      return res
+        .status(400)
+        .send("Invalid file type. Upload only Excel or CSV files.");
     }
 
-    const filePath = path.join(__dirname, '../..','uploads', file.filename);
+    const filePath = path.join(__dirname, "../..", "uploads", file.filename);
 
     // Parse the file based on its type
     const extractedData = await parseFile(filePath, ext);
-    for(let i=0;i<extractedData?.length;i++){
-      extractedData[i]=transformIncidentData(extractedData[i]);
-    }
 
-    const arr=[];
-    for(let i=0;i<extractedData.length;i++){
-      await createFuncUtil(extractedData[i],arr);
-    }
+    const transformedData = extractedData.map(transformIncidentData);
 
-
+    // Save each row as a document in the database
+    await Promise.all(
+      transformedData.map(async (rowData) => {
+        await createFuncUtil(rowData,userId);
+      })
+    );
 
     res.status(200).json({
-      message: 'File processed successfully!',
-      data: {extractedData,arr},
+      message: "File processed successfully!",
+      data: transformedData,
     });
 
     // Clean up the file after processing
     fs.unlinkSync(filePath);
-
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error processing file.');
+    res.status(500).send("Error processing file.");
   }
-}
+};
 
-// Get all Incidents
 export const getAllIncidents = async (req, res) => {
   try {
     // Extract start, end, and category from the query parameters
@@ -211,22 +285,47 @@ export const getAllIncidents = async (req, res) => {
       },
     });
   } catch (error) {
-    handleServerError(res, error, 'Error retrieving incidents');
+    handleServerError(res, error, "Error retrieving incidents");
   }
 };
 
+export const getIncidentsById = async (req, res) => {
+  try {
+    // Extract start, end, and category from the query parameters, and userId from the body
+    const { start = 0, end = 10, category } = req.query;
+    const { userId } = req.body;
+    console.log(userId)
+
+    // Ensure that start and end are integers
+    const startIndex = parseInt(start);
+    const endIndex = parseInt(end);
+
+    const incidents = await Incident.find({creator:userId})
+    res.status(200).json({
+      success: true,
+      data: incidents,
+      pagination: {
+        start: startIndex,
+        end: endIndex,
+        count: 20, // Total number of incidents matching the query
+      },
+    });
+  } catch (error) {
+    handleServerError(res, error, "Error retrieving incidents");
+  }
+};
 
 // Get a single Incident by ID
 export const getIncidentById = async (req, res) => {
   try {
     const incident = await Incident.findById(req.params.id);
-    console.log(incident)
+    console.log(incident);
     if (!incident) {
-      return res.status(404).json({ message: 'Incident not found' });
+      return res.status(404).json({ message: "Incident not found" });
     }
     res.status(200).json(incident);
   } catch (error) {
-    handleServerError(res, error, 'Error retrieving incident');
+    handleServerError(res, error, "Error retrieving incident");
   }
 };
 
@@ -239,11 +338,11 @@ export const updateIncident = async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!updatedIncident) {
-      return res.status(404).json({ message: 'Incident not found' });
+      return res.status(404).json({ message: "Incident not found" });
     }
     res.status(200).json(updatedIncident);
   } catch (error) {
-    handleServerError(res, error, 'Error updating incident');
+    handleServerError(res, error, "Error updating incident");
   }
 };
 
@@ -252,11 +351,11 @@ export const deleteIncident = async (req, res) => {
   try {
     const deletedIncident = await Incident.findByIdAndDelete(req.params.id);
     if (!deletedIncident) {
-      return res.status(404).json({ message: 'Incident not found' });
+      return res.status(404).json({ message: "Incident not found" });
     }
-    res.status(200).json({ message: 'Incident deleted successfully' });
+    res.status(200).json({ message: "Incident deleted successfully" });
   } catch (error) {
-    handleServerError(res, error, 'Error deleting incident');
+    handleServerError(res, error, "Error deleting incident");
   }
 };
 
@@ -264,7 +363,14 @@ export const deleteIncident = async (req, res) => {
 export const searchIncidents = async (req, res) => {
   try {
     // Extract query parameters from the request
-    const { title, status, category, threatActorName, victimCountry, victimIndustry } = req.query;
+    const {
+      title,
+      status,
+      category,
+      threatActorName,
+      victimCountry,
+      victimIndustry,
+    } = req.query;
 
     // Build a dynamic query object based on the provided parameters
     const searchQuery = {};
@@ -272,7 +378,7 @@ export const searchIncidents = async (req, res) => {
     if (title) {
       searchQuery.title = { $regex: title, $options: "i" }; // Case-insensitive search
     }
-    
+
     if (status !== undefined) {
       searchQuery.status = status === "true"; // Convert string to boolean
     }
@@ -282,7 +388,10 @@ export const searchIncidents = async (req, res) => {
     }
 
     if (threatActorName) {
-      searchQuery["threatActor.name"] = { $regex: threatActorName, $options: "i" }; // Case-insensitive search
+      searchQuery["threatActor.name"] = {
+        $regex: threatActorName,
+        $options: "i",
+      }; // Case-insensitive search
     }
 
     if (victimCountry) {
@@ -290,7 +399,10 @@ export const searchIncidents = async (req, res) => {
     }
 
     if (victimIndustry) {
-      searchQuery["victims.industry"] = { $regex: victimIndustry, $options: "i" }; // Case-insensitive search
+      searchQuery["victims.industry"] = {
+        $regex: victimIndustry,
+        $options: "i",
+      }; // Case-insensitive search
     }
 
     // Perform the search using Mongoose
@@ -324,7 +436,7 @@ export const getIncidentsByDateRange = async (req, res) => {
 
     res.status(200).json(incidents);
   } catch (error) {
-    handleServerError(res, error, 'Error retrieving incidents by date range');
+    handleServerError(res, error, "Error retrieving incidents by date range");
   }
 };
 
@@ -336,7 +448,7 @@ export const addImageToIncident = async (req, res) => {
 
     const incident = await Incident.findById(id);
     if (!incident) {
-      return res.status(404).json({ message: 'Incident not found' });
+      return res.status(404).json({ message: "Incident not found" });
     }
 
     incident.images.push({ description, url });
@@ -344,7 +456,7 @@ export const addImageToIncident = async (req, res) => {
 
     res.status(200).json(incident);
   } catch (error) {
-    handleServerError(res, error, 'Error adding image to incident');
+    handleServerError(res, error, "Error adding image to incident");
   }
 };
 
@@ -355,15 +467,17 @@ export const removeImageFromIncident = async (req, res) => {
 
     const incident = await Incident.findById(id);
     if (!incident) {
-      return res.status(404).json({ message: 'Incident not found' });
+      return res.status(404).json({ message: "Incident not found" });
     }
 
-    incident.images = incident.images.filter(img => img._id.toString() !== imageId);
+    incident.images = incident.images.filter(
+      (img) => img._id.toString() !== imageId
+    );
     await incident.save();
 
     res.status(200).json(incident);
   } catch (error) {
-    handleServerError(res, error, 'Error removing image from incident');
+    handleServerError(res, error, "Error removing image from incident");
   }
 };
 
@@ -373,25 +487,30 @@ export const getImageByRecentDate = async (req, res) => {
 
     // Ensure that both startDate and endDate are provided
     if (!startDate || !endDate) {
-      return res.status(400).json({ message: "Please provide both startDate and endDate" });
+      return res
+        .status(400)
+        .json({ message: "Please provide both startDate and endDate" });
     }
 
     // Query incidents based on the date range
     const incidents = await Incident.find({
-      date: { $gte: new Date(startDate), $lte: new Date(endDate) }
+      date: { $gte: new Date(startDate), $lte: new Date(endDate) },
     });
 
     // If no incidents found, return a not found response
     if (incidents.length === 0) {
-      return res.status(404).json({ message: "No incidents found in the given date range" });
+      return res
+        .status(404)
+        .json({ message: "No incidents found in the given date range" });
     }
 
     // Respond with the incidents found
     return res.status(200).json(incidents);
-
   } catch (error) {
     // Handle any errors that occur during the query or request
-    return res.status(500).json({ message: "An error occurred", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
   }
 };
 export const recentMalwares = async (req, res) => {
@@ -400,72 +519,138 @@ export const recentMalwares = async (req, res) => {
 
     // Ensure that both startDate and endDate are provided
     if (!startDate || !endDate) {
-      return res.status(400).json({ message: "Please provide both startDate and endDate" });
+      return res
+        .status(400)
+        .json({ message: "Please provide both startDate and endDate" });
     }
 
     // Query incidents based on the date range
     const incidents = await Incident.find({
-      date: { $gte: new Date(startDate), $lte: new Date(endDate) }
+      date: { $gte: new Date(startDate), $lte: new Date(endDate) },
     });
 
     // If no incidents found, return a not found response
     if (incidents.length === 0) {
-      return res.status(404).json({ message: "No incidents found in the given date range" });
+      return res
+        .status(404)
+        .json({ message: "No incidents found in the given date range" });
     }
 
     // Respond with the incidents found
     return res.status(200).json(incidents);
-
   } catch (error) {
     // Handle any errors that occur during the query or request
-    return res.status(500).json({ message: "An error occurred", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
   }
 };
 
+// export const getMostAffectedCountries = async (req, res) => {
+//   try {
+//     // Default startDate and endDate values
+//     const { startDate = '2023-10-12', endDate = Date.now() } = req.body;
+
+//     // Parse dates correctly
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+
+//     console.log(start,end)
+
+//     // Ensure both dates are valid
+//     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+//       return res.status(400).json({ message: "Invalid date format" });
+//     }
+
+//     const allData=await Incident.find({});
+//     console.log(allData);
+
+//     // Retrieve and aggregate the countries affected within the date range
+//     const countries = await Incident.aggregate([
+//       {
+//         $match: {
+//           publicationDate: { $gte: start, $lte: end }
+//         }
+//       },
+//       { $unwind: "$victims" }, // Unwind the array of victims
+//       {
+//         $group: {
+//           _id: "$victims.country", // Group by victim's country
+//           count: { $sum: 1 }       // Count the occurrences of each country
+//         }
+//       },
+//       { $sort: { count: -1 } }    // Sort by count in descending order
+//     ]);
+
+//     // Log the result for debugging
+//     console.log(countries);
+
+//     // Return the result
+//     return res.status(200).json(countries);
+//   } catch (error) {
+//     console.error("Error fetching countries:", error);
+//     return res.status(500).json({ message: "An error occurred", error: error.message });
+//   }
+// };
+
 export const getMostAffectedCountries = async (req, res) => {
   try {
-    // Default startDate and endDate values
-    const { startDate = '2023-10-12', endDate = Date.now() } = req.body;
+    console.log("Request Body:", req.body);
 
-    // Parse dates correctly
+    const { startDate = "2023-10-12", endDate = Date.now() } = req.body;
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    console.log(start,end)
-
-    // Ensure both dates are valid
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({ message: "Invalid date format" });
     }
+    if (end < start) {
+      return res
+        .status(400)
+        .json({ message: "End date must be after start date" });
+    }
 
-    const allData=await Incident.find({});
-    console.log(allData);
-
-    // Retrieve and aggregate the countries affected within the date range
     const countries = await Incident.aggregate([
+      { $unwind: "$data" },
       {
         $match: {
-          publicationDate: { $gte: start, $lte: end }
-        }
+          "data.row.victims_country": { $exists: true, $ne: null },
+          "data.row.publicationDate": { $gte: start, $lte: end },
+        },
       },
-      { $unwind: "$victims" }, // Unwind the array of victims
       {
         $group: {
-          _id: "$victims.country", // Group by victim's country
-          count: { $sum: 1 }       // Count the occurrences of each country
-        }
+          _id: "$data.row.victims_country",
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { count: -1 } }    // Sort by count in descending order
+      { $sort: { count: -1 } },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          count: 1,
+        },
+      },
     ]);
 
-    // Log the result for debugging
-    console.log(countries);
+    if (countries.length === 0) {
+      return res
+        .status(404)
+        .json({
+          message: "No affected countries found in the specified date range",
+        });
+    }
 
-    // Return the result
     return res.status(200).json(countries);
   } catch (error) {
-    console.error("Error fetching countries:", error);
-    return res.status(500).json({ message: "An error occurred", error: error.message });
+    console.error("Error retrieving affected countries:", error);
+    return res
+      .status(500)
+      .json({
+        message: "An internal server error occurred",
+        error: error.message,
+      });
   }
 };
 
@@ -476,49 +661,117 @@ export const getMostActiveThreatActors = async (req, res) => {
     const threatActors = await Incident.aggregate([
       {
         $match: {
-          publicationDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
-        }
+          publicationDate: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+        },
       },
       {
         $group: {
           _id: "$threatActor.name", // Group by threat actor name
-          count: { $sum: 1 }        // Count the occurrences
-        }
+          count: { $sum: 1 }, // Count the occurrences
+        },
       },
-      { $sort: { count: -1 } }      // Sort by count in descending order
+      { $sort: { count: -1 } }, // Sort by count in descending order
     ]);
 
     return res.status(200).json(threatActors);
   } catch (error) {
-    return res.status(500).json({ message: "An error occurred", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
   }
 };
+
+// export const getMostTargetedIndustries = async (req, res) => {
+//   try {
+//     const { startDate, endDate } = req.body;
+
+//     const industries = await Incident.aggregate([
+//       {
+//         $match: {
+//           publicationDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
+//         }
+//       },
+//       { $unwind: "$victims" }, // Unwind the array of victims
+//       {
+//         $group: {
+//           _id: "$victims.industry", // Group by industry
+//           count: { $sum: 1 }        // Count the occurrences
+//         }
+//       },
+//       { $sort: { count: -1 } }      // Sort by count in descending order
+//     ]);
+
+//     return res.status(200).json(industries);
+//   } catch (error) {
+//     return res.status(500).json({ message: "An error occurred", error: error.message });
+//   }
+// };
 
 export const getMostTargetedIndustries = async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
+    console.log("Request Body:", req.body);
 
-    const industries = await Incident.aggregate([
+    const { startDate = "2023-10-12", endDate = Date.now() } = req.body;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    console.log(start, end);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: "Invalid date format" });
+    }
+    if (end < start) {
+      return res
+        .status(400)
+        .json({ message: "End date must be after start date" });
+    }
+
+    console.log("abhishek");
+    const countriesCount = await Incident.find();
+
+    const countries = await Incident.aggregate([
+      {
+        $unwind: "$data",
+      },
       {
         $match: {
-          publicationDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
-        }
+          "data.row.victims_industry": { $exists: true, $ne: null }, // Exclude documents missing victims_country
+        },
       },
-      { $unwind: "$victims" }, // Unwind the array of victims
       {
         $group: {
-          _id: "$victims.industry", // Group by industry
-          count: { $sum: 1 }        // Count the occurrences
-        }
+          _id: "$data.row.victims_industry",
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { count: -1 } }      // Sort by count in descending order
+      { $sort: { count: -1 } },
     ]);
 
-    return res.status(200).json(industries);
+    if (countriesCount.length === 0) {
+      return res
+        .status(404)
+        .json({
+          message: "No affected countries found in the specified date range",
+        });
+    }
+
+    return res.status(200).json(countriesCount);
   } catch (error) {
-    return res.status(500).json({ message: "An error occurred", error: error.message });
+    console.error("Error retrieving incident:", error);
+    return res
+      .status(500)
+      .json({
+        message: "An internal server error occurred",
+        error: error.message,
+      });
   }
 };
+
+export const tableHeadings=async(req,res)=>{
+  
+}
 
 // Export all controllers as a single module
 export default {
@@ -528,6 +781,7 @@ export default {
   updateIncident,
   deleteIncident,
   searchIncidents,
+  getIncidentsById, // Added this line
   getIncidentsByDateRange,
   addImageToIncident,
   removeImageFromIncident,
@@ -535,5 +789,5 @@ export default {
   getMostAffectedCountries,
   getMostTargetedIndustries,
   updateStatus,
-  createIncidentByUploadingFile
+  createIncidentByUploadingFile,
 };

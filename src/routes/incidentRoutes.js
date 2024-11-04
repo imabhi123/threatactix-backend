@@ -6,11 +6,13 @@ const router = express.Router();
 
 // Move /incidents/search before /incidents/:id
 router.get('/incidents/search', incidentController.searchIncidents);
+router.post('/incidents-by-id', incidentController.getIncidentsById);
 
 router.post('/incidents', incidentController.createIncident);
+
 router.post('/incidents/create-by-fileupload', upload.single('file'), incidentController.createIncidentByUploadingFile);
 
-router.post('/incidents/getMostAffectedCountries', incidentController.getMostAffectedCountries);
+router.post('/incidentss/d/getMostAffectedCountries', incidentController.getMostAffectedCountries);
 router.post('/incidents/getMostActiveThreatActors', incidentController.getMostActiveThreatActors);
 router.post('/incidents/getMostTargetedIndustries', incidentController.getMostTargetedIndustries);
 

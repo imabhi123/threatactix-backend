@@ -42,7 +42,7 @@ const limiter = rateLimit({
 });
 // app.use(limiter);
 
-gatherMoreDetails('what is quantum physics')
+// gatherMoreDetails('what is quantum physics')
 
 // Middleware
 app.use(express.json()); // For parsing application/json

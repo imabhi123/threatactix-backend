@@ -1,11 +1,83 @@
 import { Admin } from "../models/adminModel.js";
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 import Incident from "../models/IncidentSchema.js";
 
 // Login Controller
+// export const loginAdmin = async (req, res) => {
+//   const { username, password } = req.body;
+//   console.log(username, password);
+
+//   // Check if username and password are provided
+//   if (!username || !password) {
+//     return res
+//       .status(400)
+//       .json({ message: "Username and password are required" });
+//   }
+
+//   try {
+//     // Find admin by username
+//     let admin = await Admin.findOne({ username });
+
+//     // If admin doesn't exist, create a new admin
+//     if (!admin) {
+//       console.log("--> Admin not found, creating a new one");
+
+//       // Create new admin (password will be hashed by the pre-save hook)
+//       const newAdmin = new Admin({
+//         username,
+//         password, // Just pass the plain password, it will be hashed automatically
+//       });
+
+//       // admin = newAdmin;
+
+//       // Save the new admin to the database
+//       await newAdmin.save();
+
+//       // After creating the new admin, log in successfully
+//       const accessToken = admin.generateAccessToken();
+//       const refreshToken = admin.generateRefreshToken();
+//       admin.refreshToken = refreshToken;
+
+//       await admin.save();
+
+//       // Return success message with tokens
+//       return res.status(200).json({
+//         accessToken,
+//         refreshToken,
+//         message: "Admin created and logged in successfully",
+//       });
+//     }
+
+//     // If admin exists, check if the password is correct
+//     const isPasswordValid = await admin.isPasswordCorrect(password);
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+//     // Generate access token
+//     const accessToken = admin.generateAccessToken();
+
+//     // Generate refresh token
+//     const refreshToken = admin.generateRefreshToken();
+
+//     // Save refresh token to the admin document in the database
+//     admin.refreshToken = refreshToken;
+//     await admin.save();
+
+//     // Send tokens as a response
+//     res.status(200).json({
+//       accessToken,
+//       refreshToken,
+//       message: "Login successful",
+//     });
+//   } catch (error) {
+//     console.error("Login error: ", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 export const loginAdmin = async (req, res) => {
   const { username, password } = req.body;
-  console.log(username, password);
 
   // Check if username and password are provided
   if (!username || !password) {
@@ -21,17 +93,15 @@ export const loginAdmin = async (req, res) => {
       console.log("--> Admin not found, creating a new one");
 
       // Create new admin (password will be hashed by the pre-save hook)
-      const newAdmin = new Admin({
+      admin = new Admin({
         username,
-        password, // Just pass the plain password, it will be hashed automatically
+        password, // Pass the plain password; it will be hashed automatically
       });
 
-      admin = newAdmin;
-
       // Save the new admin to the database
-      await newAdmin.save();
+      await admin.save();
 
-      // After creating the new admin, log in successfully
+      // Generate tokens for the new admin
       const accessToken = admin.generateAccessToken();
       const refreshToken = admin.generateRefreshToken();
       admin.refreshToken = refreshToken;
@@ -42,6 +112,7 @@ export const loginAdmin = async (req, res) => {
       return res.status(200).json({
         accessToken,
         refreshToken,
+        admin,
         message: "Admin created and logged in successfully",
       });
     }
@@ -52,20 +123,20 @@ export const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate access token
+    // Generate tokens for existing admin
     const accessToken = admin.generateAccessToken();
-
-    // Generate refresh token
     const refreshToken = admin.generateRefreshToken();
 
-    // Save refresh token to the admin document in the database
+    // Save the refresh token to the admin document in the database
     admin.refreshToken = refreshToken;
     await admin.save();
+    console.log(admin);
 
     // Send tokens as a response
     res.status(200).json({
       accessToken,
       refreshToken,
+      admin,
       message: "Login successful",
     });
   } catch (error) {
@@ -102,7 +173,7 @@ export const getIncidents = async (req, res) => {
       },
     });
   } catch (error) {
-    handleServerError(res, error, 'Error retrieving incidents');
+    handleServerError(res, error, "Error retrieving incidents");
   }
 };
 
@@ -122,15 +193,14 @@ export const incidentStatusUpdate = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Status successfully changed',
+      message: "Status successfully changed",
       updatedIncident: incident,
     });
   } catch (error) {
-    console.error('Error updating incident status:', error);
-    res.status(500).json({ success: false, message: 'An error occurred' });
+    console.error("Error updating incident status:", error);
+    res.status(500).json({ success: false, message: "An error occurred" });
   }
 };
-
 
 export const getProfile = async (req, res) => {
   const { token } = req.body;
@@ -142,7 +212,7 @@ export const getProfile = async (req, res) => {
 
   try {
     // Verify the token
-    const decoded =await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
     // Find the admin using the ID from the decoded token
     const admin = await Admin.findById(decoded._id);
@@ -166,7 +236,9 @@ export const getProfile = async (req, res) => {
 
     // If token is invalid or expired
     if (error.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token expired, please log in again" });
+      return res
+        .status(401)
+        .json({ message: "Token expired, please log in again" });
     }
 
     // Other errors related to token verification
