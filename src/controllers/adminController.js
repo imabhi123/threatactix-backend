@@ -81,7 +81,9 @@ export const loginAdmin = async (req, res) => {
 
   // Check if username and password are provided
   if (!username || !password) {
-    return res.status(400).json({ message: "Username and password are required" });
+    return res
+      .status(400)
+      .json({ message: "Username and password are required" });
   }
 
   try {
@@ -243,5 +245,49 @@ export const getProfile = async (req, res) => {
 
     // Other errors related to token verification
     return res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+export const updateTableHeading = async (req, res) => {
+  const { userId, headings } = req.body;
+  const admin = await Admin.findById(userId);
+  if (!admin) {
+    return res.status(400).json({ message: "Admin does not exists" });
+  }
+  const newAdmin = await Admin.findByIdAndUpdate(
+    userId, // use userId as the document's _id
+    { tableHeadings: headings }, // update tableHeadings
+    { new: true } // return the updated document
+  );
+
+  res.status(200).json({
+    message: "Heading Changed successfully!",
+    data: newAdmin,
+  });
+};
+
+export const getTableHeadings = async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    // Find the admin by userId
+    const admin = await Admin.findById(userId);
+
+    // Check if admin exists
+    if (!admin) {
+      return res.status(400).json({ message: "Admin does not exist" });
+    }
+
+    // Respond with the tableHeadings
+    res.status(200).json({
+      message: "Table headings retrieved successfully!",
+      data: admin.tableHeadings,
+    });
+  } catch (error) {
+    // Handle any unexpected errors
+    res.status(500).json({
+      message: "An error occurred while retrieving the table headings.",
+      error: error.message,
+    });
   }
 };

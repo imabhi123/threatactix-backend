@@ -101,6 +101,10 @@ const IncidentSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    headings:{
+      type:[String],
+      required:true
+    },
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",

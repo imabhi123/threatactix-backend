@@ -5,6 +5,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { parseFile } from "../utils/parseFile.js";
 import { transformIncidentData } from "../utils/utilityfunc.js";
+import { Admin } from "../models/adminModel.js";
 
 // Manually define __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,17 @@ const __dirname = path.dirname(__filename);
 const handleServerError = (res, error, message) => {
   res.status(500).json({ message, error });
 };
+
+function convertToNaturalLanguage(variableName) {
+  // Replace underscores with spaces
+  let words = variableName.replace(/_/g, " ");
+
+  // Insert a space before each capital letter, excluding the first word
+  words = words.replace(/([a-z])([A-Z])/g, "$1 $2");
+
+  // Capitalize the first letter of each word
+  return words.replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 // export const createFuncUtil = async (data,arr) => {
 //   try {
@@ -67,12 +79,13 @@ const handleServerError = (res, error, message) => {
 
 // Create a new Incident
 
-export const createFuncUtil = async (data,userId) => {
+export const createFuncUtil = async (data, userId, headingsArray) => {
   try {
     const newExcelData = new Incident({
       sheetName: "Incident Data",
       data: [data],
-      creator:userId
+      creator: userId,
+      headings: headingsArray,
     });
 
     await newExcelData.save();
@@ -129,12 +142,10 @@ export const createIncident = async (req, res) => {
     await newIncident.save();
 
     // Return success response
-    return res
-      .status(201)
-      .json({
-        message: "Incident created successfully",
-        incident: newIncident,
-      });
+    return res.status(201).json({
+      message: "Incident created successfully",
+      incident: newIncident,
+    });
   } catch (error) {
     // Handle any errors that occur during the process
     console.error("Error creating incident:", error);
@@ -216,7 +227,7 @@ export const createIncidentByUploadingFile = async (req, res) => {
   try {
     const file = req.file;
     const { userId } = req.body;
-    console.log("abhishek", userId,req.body);
+    // console.log("abhishek", userId,req.body);
     if (!file) {
       return res.status(400).send("No file uploaded.");
     }
@@ -236,10 +247,21 @@ export const createIncidentByUploadingFile = async (req, res) => {
 
     const transformedData = extractedData.map(transformIncidentData);
 
+    const headingsArray = [];
     // Save each row as a document in the database
     await Promise.all(
-      transformedData.map(async (rowData) => {
-        await createFuncUtil(rowData,userId);
+      transformedData.map(async (rowData, index) => {
+        if (index === 0) {
+          rowData?.row.forEach((value, key) => {
+            headingsArray.push(convertToNaturalLanguage(key));
+          });
+          const admin = await Admin.findByIdAndUpdate(
+            userId, // use userId as the document's _id
+            { tableHeadings: headingsArray }, // update tableHeadings
+            { new: true } // return the updated document
+          );
+        }
+        await createFuncUtil(rowData, userId);
       })
     );
 
@@ -253,6 +275,33 @@ export const createIncidentByUploadingFile = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send("Error processing file.");
+  }
+};
+
+export const updateRowData = async (req, res) => {
+  try {
+    const { userId, incidentId, rowData } = req.body;
+    
+    // Check if the incident exists
+    const incident = await Incident.findById(incidentId);
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    // Update the single row data
+    const updatedIncident = await Incident.findByIdAndUpdate(
+      incidentId,
+      { "data.0.row": rowData },  // Access the first element in the data array
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedIncident) {
+      return res.status(404).json({ message: "Failed to update row data" });
+    }
+
+    res.status(200).json({ message: "Row data updated successfully", updatedIncident });
+  } catch (error) {
+    res.status(500).json({ message: "An error occurred", error: error.message });
   }
 };
 
@@ -294,13 +343,13 @@ export const getIncidentsById = async (req, res) => {
     // Extract start, end, and category from the query parameters, and userId from the body
     const { start = 0, end = 10, category } = req.query;
     const { userId } = req.body;
-    console.log(userId)
+    console.log(userId);
 
     // Ensure that start and end are integers
     const startIndex = parseInt(start);
     const endIndex = parseInt(end);
 
-    const incidents = await Incident.find({creator:userId})
+    const incidents = await Incident.find({ creator: userId });
     res.status(200).json({
       success: true,
       data: incidents,
@@ -635,22 +684,18 @@ export const getMostAffectedCountries = async (req, res) => {
     ]);
 
     if (countries.length === 0) {
-      return res
-        .status(404)
-        .json({
-          message: "No affected countries found in the specified date range",
-        });
+      return res.status(404).json({
+        message: "No affected countries found in the specified date range",
+      });
     }
 
     return res.status(200).json(countries);
   } catch (error) {
     console.error("Error retrieving affected countries:", error);
-    return res
-      .status(500)
-      .json({
-        message: "An internal server error occurred",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "An internal server error occurred",
+      error: error.message,
+    });
   }
 };
 
@@ -750,28 +795,22 @@ export const getMostTargetedIndustries = async (req, res) => {
     ]);
 
     if (countriesCount.length === 0) {
-      return res
-        .status(404)
-        .json({
-          message: "No affected countries found in the specified date range",
-        });
+      return res.status(404).json({
+        message: "No affected countries found in the specified date range",
+      });
     }
 
     return res.status(200).json(countriesCount);
   } catch (error) {
     console.error("Error retrieving incident:", error);
-    return res
-      .status(500)
-      .json({
-        message: "An internal server error occurred",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "An internal server error occurred",
+      error: error.message,
+    });
   }
 };
 
-export const tableHeadings=async(req,res)=>{
-  
-}
+export const tableHeadings = async (req, res) => {};
 
 // Export all controllers as a single module
 export default {
@@ -790,4 +829,5 @@ export default {
   getMostTargetedIndustries,
   updateStatus,
   createIncidentByUploadingFile,
+  updateRowData
 };
