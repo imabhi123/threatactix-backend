@@ -180,6 +180,26 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+export const deleteIncident = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the incident by ID and delete it
+    const incident = await Incident.findByIdAndDelete(id);
+
+    // Check if the incident exists
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    // Send a success response
+    res.status(200).json({ message: "Incident deleted successfully" });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({ message: "Error deleting incident", error });
+  }
+};
+
 // export const createIncidentByUploadingFile= async (req, res) => {
 //   try {
 //     const file = req.file;
@@ -281,7 +301,7 @@ export const createIncidentByUploadingFile = async (req, res) => {
 export const updateRowData = async (req, res) => {
   try {
     const { userId, incidentId, rowData } = req.body;
-    
+
     // Check if the incident exists
     const incident = await Incident.findById(incidentId);
     if (!incident) {
@@ -291,7 +311,7 @@ export const updateRowData = async (req, res) => {
     // Update the single row data
     const updatedIncident = await Incident.findByIdAndUpdate(
       incidentId,
-      { "data.0.row": rowData },  // Access the first element in the data array
+      { "data.0.row": rowData }, // Access the first element in the data array
       { new: true } // Return the updated document
     );
 
@@ -299,9 +319,13 @@ export const updateRowData = async (req, res) => {
       return res.status(404).json({ message: "Failed to update row data" });
     }
 
-    res.status(200).json({ message: "Row data updated successfully", updatedIncident });
+    res
+      .status(200)
+      .json({ message: "Row data updated successfully", updatedIncident });
   } catch (error) {
-    res.status(500).json({ message: "An error occurred", error: error.message });
+    res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
   }
 };
 
@@ -392,19 +416,6 @@ export const updateIncident = async (req, res) => {
     res.status(200).json(updatedIncident);
   } catch (error) {
     handleServerError(res, error, "Error updating incident");
-  }
-};
-
-// Delete an Incident by ID
-export const deleteIncident = async (req, res) => {
-  try {
-    const deletedIncident = await Incident.findByIdAndDelete(req.params.id);
-    if (!deletedIncident) {
-      return res.status(404).json({ message: "Incident not found" });
-    }
-    res.status(200).json({ message: "Incident deleted successfully" });
-  } catch (error) {
-    handleServerError(res, error, "Error deleting incident");
   }
 };
 
@@ -689,6 +700,8 @@ export const getMostAffectedCountries = async (req, res) => {
       });
     }
 
+    console.log(countries);
+
     return res.status(200).json(countries);
   } catch (error) {
     console.error("Error retrieving affected countries:", error);
@@ -829,5 +842,5 @@ export default {
   getMostTargetedIndustries,
   updateStatus,
   createIncidentByUploadingFile,
-  updateRowData
+  updateRowData,
 };
