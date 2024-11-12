@@ -6,7 +6,7 @@ import {
   updatePromoCode,
   deletePromoCode,
   applyPromoCode
-} from '../controllers/promoCodeController.js';
+} from '../controllers/promocodeController.js';
 
 const router = express.Router();
 

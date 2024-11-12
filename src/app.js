@@ -19,11 +19,13 @@ import adminRoutes from './routes/adminRoutes.js';
 // import alertRoutes from './routes/alertRoutes.js';
 import userRoutes from './routes/user-routes.js'
 import incidentRoutes from './routes/incidentRoutes.js'
+import promocodeRoutes from './routes/promocodeRoutes.js'
 import { Admin } from './models/adminModel.js';
 import gatherMoreDetails from './utils/webscrapper.js';
 import Plan from './models/planSchema.js';
 import { User } from './models/userModel.js';
 import planRoutes from './routes/planRoutes.js'
+import blogRoutes from './routes/blogRoutes.js'
 
 // Initialize app
 dotenv.config(); // Load environment variables
@@ -57,9 +59,11 @@ app.use(morgan('dev'));  // Logging middleware
 app.use('/api/v1/admin', adminRoutes);    // Admin management routes
 // app.use('/api/threats', threatRoutes); // Threat intelligence data routes
 // app.use('/api/alerts', alertRoutes);   // User alerts and notification routes
-app.use('/api/v1/user', userRoutes); 
-app.use('/api/v1/incident',incidentRoutes);
+app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/incident', incidentRoutes);
 app.use('/api/v1/plans', planRoutes);
+app.use('/api/v1/promo', promocodeRoutes);
+app.use('/api/v1/blogs', blogRoutes);
 
 // Custom error handling middleware
 app.use(errorHandler);

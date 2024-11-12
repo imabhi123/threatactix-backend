@@ -1,5 +1,4 @@
-import PromoCode from '../models/PromoCode.js';
-
+import PromoCode from "../models/promocodeSchema.js";
 // Create a new promo code
 export const createPromoCode = async (req, res) => {
   try {
