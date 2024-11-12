@@ -243,11 +243,66 @@ export const deleteIncident = async (req, res) => {
 
 // Get all Incidents
 
+// export const createIncidentByUploadingFile = async (req, res) => {
+//   try {
+//     const file = req.file;
+//     const { userId } = req.body;
+//     // console.log("abhishek", userId,req.body);
+//     if (!file) {
+//       return res.status(400).send("No file uploaded.");
+//     }
+
+//     const ext = path.extname(file.originalname).toLowerCase();
+//     const validExtensions = [".xlsx", ".xls", ".csv"];
+//     if (!validExtensions.includes(ext)) {
+//       return res
+//         .status(400)
+//         .send("Invalid file type. Upload only Excel or CSV files.");
+//     }
+
+//     const filePath = path.join(__dirname, "../..", "uploads", file.filename);
+
+//     // Parse the file based on its type
+//     const extractedData = await parseFile(filePath, ext);
+
+//     const transformedData = extractedData.map(transformIncidentData);
+
+//     const headingsArray = [];
+//     // Save each row as a document in the database
+//     await Promise.all(
+//       transformedData.map(async (rowData, index) => {
+//         if (index === 0) {
+//           rowData?.row.forEach((value, key) => {
+//             headingsArray.push(convertToNaturalLanguage(key));
+//           });
+//           const admin = await Admin.findByIdAndUpdate(
+//             userId, // use userId as the document's _id
+//             { tableHeadings: headingsArray }, // update tableHeadings
+//             { new: true } // return the updated document
+//           );
+//         }
+//         await createFuncUtil(rowData, userId);
+//       })
+//     );
+
+//     res.status(200).json({
+//       message: "File processed successfully!",
+//       data: transformedData,
+//     });
+
+//     // Clean up the file after processing
+//     fs.unlinkSync(filePath);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error processing file.");
+//   }
+// };
+
 export const createIncidentByUploadingFile = async (req, res) => {
   try {
     const file = req.file;
     const { userId } = req.body;
-    // console.log("abhishek", userId,req.body);
+
     if (!file) {
       return res.status(400).send("No file uploaded.");
     }
@@ -268,17 +323,18 @@ export const createIncidentByUploadingFile = async (req, res) => {
     const transformedData = extractedData.map(transformIncidentData);
 
     const headingsArray = [];
-    // Save each row as a document in the database
     await Promise.all(
       transformedData.map(async (rowData, index) => {
         if (index === 0) {
           rowData?.row.forEach((value, key) => {
             headingsArray.push(convertToNaturalLanguage(key));
           });
-          const admin = await Admin.findByIdAndUpdate(
-            userId, // use userId as the document's _id
-            { tableHeadings: headingsArray }, // update tableHeadings
-            { new: true } // return the updated document
+
+          // Update the heading only if tableHeadings is empty
+          const admin = await Admin.findOneAndUpdate(
+            { _id: userId, tableHeadings: { $exists: true, $size: 0 } },
+            { tableHeadings: headingsArray },
+            { new: true }
           );
         }
         await createFuncUtil(rowData, userId);
@@ -297,6 +353,7 @@ export const createIncidentByUploadingFile = async (req, res) => {
     res.status(500).send("Error processing file.");
   }
 };
+
 
 export const updateRowData = async (req, res) => {
   try {

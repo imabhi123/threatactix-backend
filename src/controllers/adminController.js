@@ -1,6 +1,7 @@
 import { Admin } from "../models/adminModel.js";
 import jwt from "jsonwebtoken";
 import Incident from "../models/IncidentSchema.js";
+import { User } from "../models/userModel.js";
 
 // Login Controller
 // export const loginAdmin = async (req, res) => {
@@ -291,3 +292,15 @@ export const getTableHeadings = async (req, res) => {
     });
   }
 };
+
+export const getAllUsers=async(req,res)=>{
+  try {
+    const users=await User.find({});
+    res.status(200).json({
+      message: "Table headings retrieved successfully!",
+      data: users,
+    });
+  } catch (error) {
+    
+  }
+}

@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/userModel.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import Plan from "../models/planSchema.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -22,16 +23,18 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
-  console.log(req.body)
-  
+  console.log(req.body);
+
   // Validate required fields
-  if ([firstName, lastName, email, password].some((field) => field?.trim() === "")) {
+  if (
+    [firstName, lastName, email, password].some((field) => field?.trim() === "")
+  ) {
     throw new ApiError(400, "Please provide all required fields");
   }
-  console.log('--->abhishek')
+  console.log("--->abhishek");
   // Check if the user already exists
   const existedUser = await User.findOne({ email });
-  console.log(existedUser,'--->abhishekk')
+  console.log(existedUser, "--->abhishekk");
 
   if (existedUser) {
     throw new ApiError(409, "User with this email already exists");
@@ -44,10 +47,12 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
   });
 
-  console.log(user,'--->abhishek')
+  console.log(user, "--->abhishek");
 
   // Retrieve user without password and refreshToken
-  const createdUser = await User.findById(user._id).select("-password -refreshToken");
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering the user");
@@ -82,10 +87,14 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   // Generate tokens
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
 
   // Fetch user data without sensitive fields
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
   // Cookie options
   const options = {
@@ -100,13 +109,21 @@ const loginUser = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-      new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully")
+      new ApiResponse(
+        200,
+        { user: loggedInUser, accessToken, refreshToken },
+        "User logged in successfully"
+      )
     );
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  console.log(req.user._id,'abhishek');
-  await User.findByIdAndUpdate(req.user._id, { $set: { refreshToken: undefined } }, { new: true });
+  console.log(req.user._id, "abhishek");
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: { refreshToken: undefined } },
+    { new: true }
+  );
 
   const options = {
     httpOnly: true,
@@ -122,12 +139,16 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    const incomingRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
     if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
 
     const user = await User.findById(decodedToken?._id);
     if (!user || incomingRefreshToken !== user.refreshToken) {
@@ -139,13 +160,20 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: true,
     };
 
-    const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
 
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", newRefreshToken, options)
-      .json(new ApiResponse(200, { accessToken, newRefreshToken }, "Access token refreshed"));
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, newRefreshToken },
+          "Access token refreshed"
+        )
+      );
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
@@ -155,7 +183,10 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword, confPassword } = req.body;
 
   if (newPassword !== confPassword) {
-    throw new ApiError(400, "New password and confirmation password do not match");
+    throw new ApiError(
+      400,
+      "New password and confirmation password do not match"
+    );
   }
 
   const user = await User.findById(req.user._id);
@@ -168,17 +199,58 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   user.password = newPassword;
   await user.save({ validateBeforeSave: false });
 
-  return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
+const purchasePlan = async (req, res) => {
+  const { userId, planId, formData } = req.body;
+
+  try {
+    console.log(req.body);
+
+    // Find the user and plan
+    const user = await User.findById(userId);
+    const plan = await Plan.findById(planId);
+    console.log(user);
+
+    // Validate user and plan existence
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!plan) {
+      return res.status(404).json({ message: "Plan not found" });
+    }
+
+    // Push the new formData into the payments array
+    user.payments.push(formData);
+
+    // Update user's plan and payments
+    user.plan = planId;
+    await user.save();
+
+    res.status(200).json({ message: "Plan purchased successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred while purchasing the plan", error: error.message });
+  }
+};
+
+
 const getCurrentUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password -refreshToken");
+  const user = await User.findById(req.user._id).select(
+    "-password -refreshToken"
+  );
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  return res.status(200).json(new ApiResponse(200, { user }, "Current user fetched successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { user }, "Current user fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -194,7 +266,9 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  return res.status(200).json(new ApiResponse(200, user, "Account details updated successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
 const updateUserprofilePicture = asyncHandler(async (req, res) => {
@@ -216,8 +290,10 @@ const updateUserprofilePicture = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  return res.status(200).json(new ApiResponse(200, user, 'avatar updated successfully'))
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "avatar updated successfully"));
+});
 
 export {
   registerUser,
@@ -227,5 +303,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  updateUserprofilePicture
+  updateUserprofilePicture,
+  purchasePlan,
 };

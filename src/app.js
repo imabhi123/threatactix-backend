@@ -21,6 +21,9 @@ import userRoutes from './routes/user-routes.js'
 import incidentRoutes from './routes/incidentRoutes.js'
 import { Admin } from './models/adminModel.js';
 import gatherMoreDetails from './utils/webscrapper.js';
+import Plan from './models/planSchema.js';
+import { User } from './models/userModel.js';
+import planRoutes from './routes/planRoutes.js'
 
 // Initialize app
 dotenv.config(); // Load environment variables
@@ -55,17 +58,16 @@ app.use('/api/v1/admin', adminRoutes);    // Admin management routes
 // app.use('/api/threats', threatRoutes); // Threat intelligence data routes
 // app.use('/api/alerts', alertRoutes);   // User alerts and notification routes
 app.use('/api/v1/user', userRoutes); 
-app.use('/api/v1/incident',incidentRoutes)
+app.use('/api/v1/incident',incidentRoutes);
+app.use('/api/v1/plans', planRoutes);
 
 // Custom error handling middleware
 app.use(errorHandler);
-
 
 // Basic home route
 app.get('/', (req, res) => {
   res.send('Welcome to the Threat Intelligence Platform API');
 });
-
 
 // Start the server
 const PORT = process.env.PORT || 5000;
