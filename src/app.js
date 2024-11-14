@@ -26,6 +26,7 @@ import Plan from './models/planSchema.js';
 import { User } from './models/userModel.js';
 import planRoutes from './routes/planRoutes.js'
 import blogRoutes from './routes/blogRoutes.js'
+import threatFeedRoutes from './routes/threatFeedRoutes.js'
 
 // Initialize app
 dotenv.config(); // Load environment variables
@@ -64,6 +65,7 @@ app.use('/api/v1/incident', incidentRoutes);
 app.use('/api/v1/plans', planRoutes);
 app.use('/api/v1/promo', promocodeRoutes);
 app.use('/api/v1/blogs', blogRoutes);
+app.use('/api/v1/threats', threatFeedRoutes);
 
 // Custom error handling middleware
 app.use(errorHandler);
