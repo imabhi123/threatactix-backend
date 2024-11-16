@@ -14,7 +14,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
   } catch (error) {
-    throw new ApiError(
+    throw new ApiError( 
       500,
       "Something went wrong while generating refresh and access token"
     );
@@ -63,6 +63,68 @@ const registerUser = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, "User registered successfully", createdUser));
 });
+
+const googleRegisterUser = asyncHandler(async (req, res) => {
+  const { firstName, lastName, email, uid } = req.body;
+  console.log(req.body);
+
+  // Validate required fields
+  if ([firstName, lastName, email, uid].some((field) => field?.trim() === "")) {
+    throw new ApiError(400, "Please provide all required fields");
+  }
+
+  console.log("---> Google Register Handler");
+
+  // Check if the user already exists
+  let user = await User.findOne({ email });
+  console.log(user, "---> Existing User Check");
+
+  if (user) {
+    // If user exists, check if their UID matches
+    if (user.uid !== uid) {
+      throw new ApiError(
+        409,
+        "User with this email already exists but UID does not match"
+      );
+    }
+    // Return the existing user
+    console.log(user, "---> Returning Existing User");
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User logged in successfully", user));
+  }
+
+  // Create a new user if not exists
+  user = await User.create({
+    firstName,
+    lastName,
+    email: email.toLowerCase(),
+    uid,
+    authProvider: "google", // Optional field to track the provider
+  });
+
+  console.log(user, "---> New User Created");
+
+  // Retrieve user without sensitive fields like password or refreshToken
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  if (!createdUser) {
+    throw new ApiError(
+      500,
+      "Something went wrong while registering the user"
+    );
+  }
+
+  // Respond with success
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, "User registered successfully", createdUser)
+    );
+});
+
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -116,6 +178,52 @@ const loginUser = asyncHandler(async (req, res) => {
       )
     );
 });
+
+const googleLoginUser = asyncHandler(async (req, res) => {
+  const { firstName, lastName, email, uid } = req.body;
+
+  // Validate required fields
+  if ([firstName, lastName, email, uid].some((field) => !field?.trim())) {
+    throw new ApiError(400, "All fields (firstName, lastName, email, uid) are required.");
+  }
+
+  // Check if the user already exists
+  let user = await User.findOne({ email });
+  console.log(user,'-->',uid);
+  if (!user) {
+    // Create a new user if none exists
+    user = await User.create({
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      _uid,
+      authProvider: "google",
+    });
+    console.log(user)
+  } else if (user.authProvider !== "google" || user.uid !== uid) {
+    // If the user exists but has mismatched or different auth details
+    throw new ApiError(401, "Authentication failed due to mismatched credentials.");
+  }
+
+  // Generate a JWT or similar token
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+  // Exclude sensitive fields before sending the response
+  const safeUser = await User.findById(user._id).select("-password -refreshToken");
+
+  if (!safeUser) {
+    throw new ApiError(500, "Failed to retrieve user information.");
+  }
+
+  // Respond with success
+  res.status(200).json({
+    message: "User authenticated successfully.",
+    user: safeUser,
+    accessToken: accessToken,
+  });
+});
+
 
 const logoutUser = asyncHandler(async (req, res) => {
   console.log(req.user._id, "abhishek");
@@ -305,4 +413,6 @@ export {
   updateAccountDetails,
   updateUserprofilePicture,
   purchasePlan,
+  googleRegisterUser,
+  googleLoginUser
 };

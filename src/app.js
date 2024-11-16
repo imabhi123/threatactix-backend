@@ -27,6 +27,7 @@ import { User } from './models/userModel.js';
 import planRoutes from './routes/planRoutes.js'
 import blogRoutes from './routes/blogRoutes.js'
 import threatFeedRoutes from './routes/threatFeedRoutes.js'
+// import paymentRoutes from './routes/paymentRoutes.js'
 
 // Initialize app
 dotenv.config(); // Load environment variables
@@ -56,16 +57,14 @@ app.use(cors());  // Allow only specific domains
 app.use(morgan('dev'));  // Logging middleware
 
 // API routes
-// app.use('/api/auth', authRoutes);      // Authentication routes
 app.use('/api/v1/admin', adminRoutes);    // Admin management routes
-// app.use('/api/threats', threatRoutes); // Threat intelligence data routes
-// app.use('/api/alerts', alertRoutes);   // User alerts and notification routes
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/incident', incidentRoutes);
 app.use('/api/v1/plans', planRoutes);
 app.use('/api/v1/promo', promocodeRoutes);
 app.use('/api/v1/blogs', blogRoutes);
 app.use('/api/v1/threats', threatFeedRoutes);
+// app.use('/api/v1/payments', paymentRoutes);
 
 // Custom error handling middleware
 app.use(errorHandler);

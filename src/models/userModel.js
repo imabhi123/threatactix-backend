@@ -27,17 +27,25 @@ const userSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Plan",
     },
+    authProvider: {
+      type: String,
+      default: ''
+    },
+    uid: {
+      type: String,
+      default: ''
+    },
     avatar: {
       type: String, // cloudinary url
       // required: true,
     },
-    payments:{
-      type:Array
+    payments: {
+      type: Array
     },
 
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // required: [true, "Password is required"],
     },
     refreshToken: {
       type: String,

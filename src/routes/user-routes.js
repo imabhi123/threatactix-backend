@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeCurrentPassword, getCurrentUser, loginUser, logoutUser, purchasePlan, refreshAccessToken, registerUser, updateAccountDetails, updateUserprofilePicture } from "../controllers/user-controller.js";
+import { changeCurrentPassword, getCurrentUser, googleLoginUser, googleRegisterUser, loginUser, logoutUser, purchasePlan, refreshAccessToken, registerUser, updateAccountDetails, updateUserprofilePicture } from "../controllers/user-controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/authMiddleware.js";
 
@@ -8,8 +8,12 @@ const router = Router();
 router.route("/register").post(
   registerUser
 );
+router.route("/google-register").post(
+  googleRegisterUser
+);
 
 router.route("/login").post(loginUser);
+router.route("/google-login").post(googleLoginUser);
 
 //secured routes
 router.route('/logout').post(verifyJWT,logoutUser);
