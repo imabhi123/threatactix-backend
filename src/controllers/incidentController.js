@@ -389,11 +389,13 @@ export const updateRowData = async (req, res) => {
 export const getAllIncidents = async (req, res) => {
   try {
     // Extract start, end, and category from the query parameters
-    const { start = 0, end = 10, category } = req.query; // Default to 0 and 10 if start and end are not provided
+    const { start = 0, end = 100, category } = req.query; // Default to 0 and 10 if start and end are not provided
 
     // Ensure that start and end are integers
     const startIndex = parseInt(start);
     const endIndex = parseInt(end);
+    const newArray=await Incident.find({});
+    console.log(newArray.length,'sdld')
 
     // Build the query conditionally based on the category
     const query = category ? { category } : {};
@@ -844,32 +846,32 @@ export const getMostTargetedIndustries = async (req, res) => {
     }
 
     console.log("abhishek");
-    const countriesCount = await Incident.find();
+    const countriesCount = await Incident.find({});
 
-    const countries = await Incident.aggregate([
-      {
-        $unwind: "$data",
-      },
-      {
-        $match: {
-          "data.row.victims_industry": { $exists: true, $ne: null }, // Exclude documents missing victims_country
-        },
-      },
-      {
-        $group: {
-          _id: "$data.row.victims_industry",
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { count: -1 } },
-    ]);
+    // const countries = await Incident.aggregate([
+    //   {
+    //     $unwind: "$data",
+    //   },
+    //   {
+    //     $match: {
+    //       "data.row.victims_industry": { $exists: true, $ne: null }, // Exclude documents missing victims_country
+    //     },
+    //   },
+    //   {
+    //     $group: {
+    //       _id: "$data.row.victims_industry",
+    //       count: { $sum: 1 },
+    //     },
+    //   },
+    //   { $sort: { count: -1 } },
+    // ]);
 
     if (countriesCount.length === 0) {
       return res.status(404).json({
         message: "No affected countries found in the specified date range",
       });
     }
-
+    console.log(countriesCount.length)
     return res.status(200).json(countriesCount);
   } catch (error) {
     console.error("Error retrieving incident:", error);
