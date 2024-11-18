@@ -16,16 +16,7 @@ const handleServerError = (res, error, message) => {
   res.status(500).json({ message, error });
 };
 
-function convertToNaturalLanguage(variableName) {
-  // Replace underscores with spaces
-  let words = variableName.replace(/_/g, " ");
 
-  // Insert a space before each capital letter, excluding the first word
-  words = words.replace(/([a-z])([A-Z])/g, "$1 $2");
-
-  // Capitalize the first letter of each word
-  return words.replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 // export const createFuncUtil = async (data,arr) => {
 //   try {
@@ -327,7 +318,7 @@ export const createIncidentByUploadingFile = async (req, res) => {
       transformedData.map(async (rowData, index) => {
         if (index === 0) {
           rowData?.row.forEach((value, key) => {
-            headingsArray.push(convertToNaturalLanguage(key));
+            headingsArray.push(key);
           });
 
           // Update the heading only if tableHeadings is empty
