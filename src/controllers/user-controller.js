@@ -125,6 +125,49 @@ const googleRegisterUser = asyncHandler(async (req, res) => {
     );
 });
 
+export const changeUserStatus = async (req, res) => {
+  const { userId } = req.params; // Assuming userId is passed as a route parameter
+  const { status } = req.body;  // New status passed in the request body
+
+  try {
+    // Validate input
+    if (typeof status !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. It must be a boolean value.",
+      });
+    }
+
+    // Find and update the user's status
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { status },
+      { new: true } // Return the updated document
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // Respond with the updated user
+    res.status(200).json({
+      success: true,
+      message: "User status updated successfully.",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating the user status.",
+    });
+  }
+};
+
+
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;

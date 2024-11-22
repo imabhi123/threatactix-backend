@@ -1,45 +1,42 @@
+import razorpay from '../config/razorpayConfig.js';
+import crypto from 'crypto';
 
-// backend/controllers/paymentController.js
-import paypal from '@paypal/checkout-server-sdk';
-import paypalClient from '../config/paypal.js';
-
+// Create a Razorpay order
 export const createOrder = async (req, res) => {
+  const { amount, currency, receipt } = req.body;
+
   try {
-    const request = new paypal.orders.OrdersCreateRequest();
-    const total = req.body.total;
+    const options = {
+      amount: amount * 100, // Amount in paise
+      currency: currency || 'INR',
+      receipt: receipt || `receipt_${Date.now()}`,
+    };
 
-    request.prefer("return=representation");
-    request.requestBody({
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value: total
-          }
-        }
-      ]
-    });
+    console.log(options)
 
-    const order = await paypalClient.execute(request);
-    res.json({ orderID: order.result.id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const order = await razorpay.orders.create(options);
+    res.status(200).json({ orderId: order.id, amount: options.amount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-export const capturePayment = async (req, res) => {
-  const orderID = req.params.orderID;
-  
+// Verify Razorpay payment
+export const verifyPayment = (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
   try {
-    const request = new paypal.orders.OrdersCaptureRequest(orderID);
-    const capture = await paypalClient.execute(request);
-    
-    res.json({ 
-      success: true, 
-      captureID: capture.result.purchase_units[0].payments.captures[0].id 
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const hmac = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + '|' + razorpay_payment_id)
+      .digest('hex');
+
+    if (hmac === razorpay_signature) {
+      res.status(200).json({ message: 'Payment verified successfully!' });
+    } else {
+      res.status(400).json({ message: 'Payment verification failed!' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

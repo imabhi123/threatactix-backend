@@ -42,7 +42,10 @@ const userSchema = new Schema(
     payments: {
       type: Array
     },
-
+    status:{
+      type:Boolean,
+      default:true
+    },
     password: {
       type: String,
       // required: [true, "Password is required"],

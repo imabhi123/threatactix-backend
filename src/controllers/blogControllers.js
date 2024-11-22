@@ -11,6 +11,33 @@ export const getAllBlogs = async (req, res) => {
   }
 };
 
+export const getTopTenCategories = async (req, res) => {
+  try {
+    const topCategories = await Blog.aggregate([
+      // Group by category and count occurrences
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 },
+        },
+      },
+      // Sort by count in descending order
+      {
+        $sort: { count: -1 },
+      },
+      // Limit to top 10 categories
+      {
+        $limit: 10,
+      },
+    ]);
+
+    res.json(topCategories); // Send the top categories as response
+  } catch (error) {
+    res.status(500).json({ error: "Failed to retrieve top categories" });
+  }
+};
+
+
 // GET a blog by ID
 export const getBlogById = async (req, res) => {
   const errors = validationResult(req);
@@ -35,8 +62,9 @@ export const createBlog = async (req, res) => {
   }
 
   try {
-    const { title, description, image } = req.body;
-    const newBlog = new Blog({ title, description, image });
+    console.log(req.body)
+    const { title, jsxcode, author ,category} = req.body;
+    const newBlog = new Blog({ title, author, jsxcode,category });
     await newBlog.save();
     res.status(201).json(newBlog);
   } catch (error) {
@@ -52,10 +80,10 @@ export const updateBlog = async (req, res) => {
   }
 
   try {
-    const { title, description, image } = req.body;
+    const { title, jsxcode, author ,category} = req.body;
     const blog = await Blog.findByIdAndUpdate(
       req.params.id,
-      { title, description, image },
+      { title, jsxcode, author,category },
       { new: true }
     );
 

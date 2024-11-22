@@ -1,5 +1,32 @@
 import { validationResult } from 'express-validator';
 import Plan from '../models/planSchema.js';
+import { User } from '../models/userModel.js';
+
+export const getPlanPurchaseCounts = async (req, res) => {
+  try {
+    // Get all users with their plans populated
+    const users = await User.find({ plan: { $ne: null } }).populate("plan", "name");
+
+    // Count purchases for each plan
+    const planCounts = users.reduce((acc, user) => {
+      const planName = user.plan.name;
+      acc[planName] = (acc[planName] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Convert the planCounts object to an array of objects
+    const planStats = Object.entries(planCounts).map(([planName, count]) => ({
+      planName,
+      count,
+    }));
+
+    // Send the response
+    res.status(200).json(planStats);
+  } catch (error) {
+    console.error("Error fetching plan purchase counts:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
 
 // Create a new plan
 export const createPlan = async (req, res) => {
@@ -31,12 +58,14 @@ export const createPlan = async (req, res) => {
 // Get all plans
 export const getAllPlans = async (req, res) => {
   try {
-    const plans = await Plan.find();
+    // Sorting the plans by price in ascending order
+    const plans = await Plan.find().sort({ price: 1 }); // Use -1 for descending order
     res.status(200).json(plans);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Get a single plan by ID
 export const getPlanById = async (req, res) => {

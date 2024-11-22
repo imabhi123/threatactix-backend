@@ -7,25 +7,20 @@ const blogSchema = new mongoose.Schema({
     trim: true,
     maxlength: 100,
   },
-  description: {
+  jsxcode: {
     type: String,
     required: true,
     trim: true,
   },
-  image: {
-    type: String,
-    required: true,
-    trim: true,
+  author:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  category:{
+    type:String,
+    default:''
+  }
+}, { timestamps: true });
 
 // Middleware to update `updatedAt` on each save
 blogSchema.pre('save', function (next) {
@@ -35,4 +30,4 @@ blogSchema.pre('save', function (next) {
 
 const Blog = mongoose.model('Blog', blogSchema);
 
-export default Blog;
+export default Blog; 

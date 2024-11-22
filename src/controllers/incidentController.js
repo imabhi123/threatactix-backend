@@ -623,6 +623,7 @@ export const getImageByRecentDate = async (req, res) => {
       .json({ message: "An error occurred", error: error.message });
   }
 };
+
 export const recentMalwares = async (req, res) => {
   try {
     const { startDate, endDate } = req.body;

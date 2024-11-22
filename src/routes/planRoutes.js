@@ -5,7 +5,8 @@ import {
   getAllPlans,
   getPlanById,
   updatePlan,
-  deletePlan
+  deletePlan,
+  getPlanPurchaseCounts
 } from '../controllers/plansController.js';
 
 const router = express.Router();
@@ -27,6 +28,7 @@ router.post(
 
 // Route to get all plans
 router.get('/', getAllPlans);
+router.get('/plans-purchase-count', getPlanPurchaseCounts);
 
 // Route to get a single plan by ID
 router.get('/:id', getPlanById);

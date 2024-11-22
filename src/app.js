@@ -27,7 +27,7 @@ import { User } from './models/userModel.js';
 import planRoutes from './routes/planRoutes.js'
 import blogRoutes from './routes/blogRoutes.js'
 import threatFeedRoutes from './routes/threatFeedRoutes.js'
-// import paymentRoutes from './routes/paymentRoutes.js'
+import paymentRoutes from './routes/paymentRoutes.js'
 
 // Initialize app
 dotenv.config(); // Load environment variables
@@ -40,7 +40,7 @@ connectDB();
 app.use(helmet());         // Set security-related HTTP headers
 app.use(mongoSanitize());  // Sanitize user input to prevent NoSQL injection attacks
 app.use(xss());            // Sanitize user input to prevent XSS attacks
-
+app.use(express.json({ limit: '10mb' })); // Increase payload size limit if needed
 // Rate Limiting Middleware
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,  // 10 minutes
@@ -52,7 +52,6 @@ const limiter = rateLimit({
 // gatherMoreDetails('what is quantum physics')
 
 // Middleware
-app.use(express.json()); // For parsing application/json
 app.use(cors());  // Allow only specific domains
 app.use(morgan('dev'));  // Logging middleware
 
@@ -64,7 +63,7 @@ app.use('/api/v1/plans', planRoutes);
 app.use('/api/v1/promo', promocodeRoutes);
 app.use('/api/v1/blogs', blogRoutes);
 app.use('/api/v1/threats', threatFeedRoutes);
-// app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // Custom error handling middleware
 app.use(errorHandler);

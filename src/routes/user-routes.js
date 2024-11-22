@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeCurrentPassword, getCurrentUser, googleLoginUser, googleRegisterUser, loginUser, logoutUser, purchasePlan, refreshAccessToken, registerUser, updateAccountDetails, updateUserprofilePicture } from "../controllers/user-controller.js";
+import { changeCurrentPassword, changeUserStatus, getCurrentUser, googleLoginUser, googleRegisterUser, loginUser, logoutUser, purchasePlan, refreshAccessToken, registerUser, updateAccountDetails, updateUserprofilePicture } from "../controllers/user-controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/authMiddleware.js";
 
@@ -14,6 +14,7 @@ router.route("/google-register").post(
 
 router.route("/login").post(loginUser);
 router.route("/google-login").post(googleLoginUser);
+router.put("/status/:userId", changeUserStatus);
 
 //secured routes
 router.route('/logout').post(verifyJWT,logoutUser);

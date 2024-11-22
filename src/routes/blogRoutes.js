@@ -6,12 +6,14 @@ import {
   createBlog,
   updateBlog,
   deleteBlog,
+  getTopTenCategories,
 } from '../controllers/blogControllers.js';
 
 const router = express.Router();
 
 // Route to get all blogs
 router.get('/', getAllBlogs);
+router.get('/get-top-ten-categories',getTopTenCategories);
 
 // Route to get a blog by ID with validation
 router.get(
@@ -23,15 +25,6 @@ router.get(
 // Route to create a new blog with validations
 router.post(
   '/',
-  [
-    body('title')
-      .notEmpty()
-      .withMessage('Title is required')
-      .isLength({ max: 100 })
-      .withMessage('Title cannot exceed 100 characters'),
-    body('description').notEmpty().withMessage('Description is required'),
-    body('image').isURL().withMessage('Image must be a valid URL'),
-  ],
   createBlog
 );
 
@@ -44,8 +37,6 @@ router.put(
       .optional()
       .isLength({ max: 100 })
       .withMessage('Title cannot exceed 100 characters'),
-    body('description').optional(),
-    body('image').optional().isURL().withMessage('Image must be a valid URL'),
   ],
   updateBlog
 );
