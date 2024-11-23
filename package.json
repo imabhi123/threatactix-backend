@@ -14,8 +14,6 @@
     "prettier": "^3.0.3"
   },
   "dependencies": {
-    "@paypal/checkout-server-sdk": "^1.0.3",
-    "@paypal/react-paypal-js": "^8.7.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
@@ -37,8 +35,6 @@
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
     "openai": "^4.68.4",
-    "paypal-rest-sdk": "^1.8.1",
-    "razorpay": "^2.9.5",
     "shadcn-ui": "^0.9.3",
     "xlsx": "^0.18.5",
     "xss-clean": "^0.1.4"
