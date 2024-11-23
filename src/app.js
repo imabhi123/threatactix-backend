@@ -27,7 +27,7 @@ import { User } from './models/userModel.js';
 import planRoutes from './routes/planRoutes.js'
 import blogRoutes from './routes/blogRoutes.js'
 import threatFeedRoutes from './routes/threatFeedRoutes.js'
-import paymentRoutes from './routes/paymentRoutes.js'
+// import paymentRoutes from './routes/paymentRoutes.js'
 import malwareRoutes from './routes/malwareRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 
@@ -65,7 +65,7 @@ app.use('/api/v1/plans', planRoutes);
 app.use('/api/v1/promo', promocodeRoutes);
 app.use('/api/v1/blogs', blogRoutes);
 app.use('/api/v1/threats', threatFeedRoutes);
-app.use('/api/v1/payments', paymentRoutes);
+// app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/malware', malwareRoutes);
 app.use('/api/v1/auth', authRoutes);
 
