@@ -267,6 +267,24 @@ export const updateTableHeading = async (req, res) => {
   });
 };
 
+export const updateMalwareTableHeading = async (req, res) => {
+  const { userId, headings } = req.body;
+  const admin = await Admin.findById(userId);
+  if (!admin) {
+    return res.status(400).json({ message: "Admin does not exists" });
+  }
+  const newAdmin = await Admin.findByIdAndUpdate(
+    userId, // use userId as the document's _id
+    { malwareHeadings: headings }, // update tableHeadings
+    { new: true } // return the updated document
+  );
+
+  res.status(200).json({
+    message: "Heading Changed successfully!",
+    data: newAdmin,
+  });
+};
+
 export const getTableHeadings = async (req, res) => {
   const { userId } = req.body;
 
@@ -283,6 +301,31 @@ export const getTableHeadings = async (req, res) => {
     res.status(200).json({
       message: "Table headings retrieved successfully!",
       data: admin.tableHeadings,
+    });
+  } catch (error) {
+    // Handle any unexpected errors
+    res.status(500).json({
+      message: "An error occurred while retrieving the table headings.",
+      error: error.message,
+    });
+  }
+};
+export const getMalwareTableHeadings = async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    // Find the admin by userId
+    const admin = await Admin.findById(userId);
+
+    // Check if admin exists
+    if (!admin) {
+      return res.status(400).json({ message: "Admin does not exist" });
+    }
+    console.log(admin)
+    // Respond with the tableHeadings
+    res.status(200).json({
+      message: "Table headings retrieved successfully!",
+      data: admin.malwareHeadings,
     });
   } catch (error) {
     // Handle any unexpected errors

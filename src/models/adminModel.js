@@ -19,6 +19,10 @@ const adminSchema = new Schema(
       type:[String],
       required:false
     },
+    malwareHeadings:{
+      type:[String],
+      required:false
+    },
     refreshToken: {
       type: String,
     },

@@ -24,8 +24,24 @@ const userSchema = new Schema(
       index: true,
     },
     plan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Plan",
+      type: {
+        planId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Plan",
+        },
+        purchaseTime: {
+          type: Date,
+          default: Date.now,
+        },
+        expiryTime: {
+          type: Date,
+        },
+      },
+      default: null, // If no plan is assigned
+    },
+    verified: {
+      type: Boolean,
+      default: false
     },
     authProvider: {
       type: String,
@@ -42,9 +58,9 @@ const userSchema = new Schema(
     payments: {
       type: Array
     },
-    status:{
-      type:Boolean,
-      default:true
+    status: {
+      type: Boolean,
+      default: true
     },
     password: {
       type: String,
