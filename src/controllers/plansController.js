@@ -4,13 +4,15 @@ import { User } from '../models/userModel.js';
 
 export const getPlanPurchaseCounts = async (req, res) => {
   try {
-    // Get all users with their plans populated
-    const users = await User.find({ plan: { $ne: null } }).populate("plan", "name");
+    // Get all users with their plan details populated
+    const users = await User.find({ "plan.planId": { $ne: null } }).populate("plan.planId", "name");
 
     // Count purchases for each plan
     const planCounts = users.reduce((acc, user) => {
-      const planName = user.plan.name;
-      acc[planName] = (acc[planName] || 0) + 1;
+      const planName = user.plan.planId?.name; // Access the name of the plan
+      if (planName) {
+        acc[planName] = (acc[planName] || 0) + 1;
+      }
       return acc;
     }, {});
 
@@ -27,6 +29,7 @@ export const getPlanPurchaseCounts = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
 
 // Create a new plan
 export const createPlan = async (req, res) => {

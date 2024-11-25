@@ -23,6 +23,10 @@ const adminSchema = new Schema(
       type:[String],
       required:false
     },
+    victimHeadings:{
+      type:[String],
+      required:false
+    },
     refreshToken: {
       type: String,
     },
