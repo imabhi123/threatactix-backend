@@ -8,6 +8,7 @@ import { transformIncidentData } from "../utils/utilityfunc.js";
 import { Admin } from "../models/adminModel.js";
 import Malware from "../models/malwareSchema.js";
 import Victim from "../models/victimSchema.js";
+import { User } from "../models/userModel.js";
 
 // Manually define __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -445,12 +446,22 @@ export const getAllIncidents = async (req, res) => {
   try {
     // Extract start, end, and category from the query parameters
     const { start = 0, end = 100, category } = req.query; // Default to 0 and 10 if start and end are not provided
+    const { userId } = req.body;
+    const user = await User.findById(userId);
+
+    if (user) {
+      await User.findByIdAndUpdate(
+        userId,
+        { $inc: { count: 1 } }, // Increment the 'count' field by 1
+        { new: true }           // Return the updated document
+      );
+    }
 
     // Ensure that start and end are integers
     const startIndex = parseInt(start);
     const endIndex = parseInt(end);
-    const newArray=await Incident.find({});
-    console.log(newArray.length,'sdld')
+    const newArray = await Incident.find({});
+    console.log(newArray.length, 'sdld')
 
     // Build the query conditionally based on the category
     const query = category ? { category } : {};
@@ -473,6 +484,25 @@ export const getAllIncidents = async (req, res) => {
     });
   } catch (error) {
     handleServerError(res, error, "Error retrieving incidents");
+  }
+};
+
+const getUsersByActivity = async (req, res) => {
+  try {
+    // Fetch users sorted by count in descending order
+    const users = await User.find().sort({ count: -1 });
+
+    // Return the sorted array of users
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error('Error fetching users by activity:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+    });
   }
 };
 
@@ -938,7 +968,7 @@ export const getMostTargetedIndustries = async (req, res) => {
   }
 };
 
-export const tableHeadings = async (req, res) => {};
+export const tableHeadings = async (req, res) => { };
 
 // Export all controllers as a single module
 export default {
@@ -958,4 +988,5 @@ export default {
   updateStatus,
   createIncidentByUploadingFile,
   updateRowData,
+  getUsersByActivity
 };

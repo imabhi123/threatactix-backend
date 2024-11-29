@@ -47,7 +47,7 @@ export default class EmailAuth {
     }
 
     verifyOTP(userEmail, providedOTP) {
-        const storedData = this.otpStore.get(userEmail); 
+        const storedData = this.otpStore.get(userEmail);
 
         if (!storedData) {
             return { valid: false, message: 'No OTP found for this email' };
@@ -65,4 +65,48 @@ export default class EmailAuth {
         this.otpStore.delete(userEmail);
         return { valid: true, message: 'OTP verified successfully' };
     }
+
+    async sendPurchaseConfirmation(userEmail, planDetails) {
+        try {
+            const startDate = new Date(); // Purchase initiation date
+            const expiryDate = new Date(startDate);
+
+            // Calculate expiry date based on the plan's duration
+            if (planDetails.duration === 'yearly') {
+                expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+            } else if (planDetails.duration === 'monthly') {
+                expiryDate.setMonth(expiryDate.getMonth() + 1);
+            }
+
+            const mailOptions = {
+                from: 'iamabhi7853@gmail.com',
+                to: userEmail,
+                subject: 'Purchase Confirmation',
+                html: `
+                    <h1>Thank You for Your Purchase!</h1>
+                    <p>Hi,</p>
+                    <p>You have successfully purchased the <strong>${planDetails.name}</strong> plan.</p>
+                    <p>Details:</p>
+                    <ul>
+                        <li>Plan Name: ${planDetails.name}</li>
+                        <li>Price: $${planDetails.price}</li>
+                        <li>Duration: ${planDetails.duration}</li>
+                        <li>Initiation Date: ${startDate.toDateString()}</li>
+                        <li>Expiry Date: ${expiryDate.toDateString()}</li>
+                    </ul>
+                    <p>We appreciate your business and look forward to serving you!</p>
+                    <p>Best regards,</p>
+                    <p>Your Company Name</p>
+                `,
+            };
+
+            await this.transporter.sendMail(mailOptions);
+            console.log('Purchase confirmation email sent successfully.');
+            return true;
+        } catch (error) {
+            console.error('Error sending purchase confirmation email:', error);
+            throw error;
+        }
+    }
+
 }

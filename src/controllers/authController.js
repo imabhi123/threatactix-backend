@@ -46,3 +46,22 @@ export const verifyOtp = async (req, res) => {
     }
 };
 
+export const sendPurchaseConfirmation = async (req, res) => {
+    try {
+        const { email, planDetails } = req.body; // Assume `planDetails` contains details of the purchased plan
+        console.log(req.body);
+
+        if (!email || !planDetails) {
+            return res.status(400).json({ error: 'Email and plan details are required' });
+        }
+
+        await emailAuth.sendPurchaseConfirmation(email, planDetails);
+
+        res.json({ message: 'Purchase confirmation email sent successfully.' });
+    } catch (error) {
+        console.error('Error sending purchase confirmation email:', error);
+        res.status(500).json({ error: 'Failed to send purchase confirmation email' });
+    }
+};
+
+

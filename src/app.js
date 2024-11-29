@@ -20,10 +20,6 @@ import adminRoutes from './routes/adminRoutes.js';
 import userRoutes from './routes/user-routes.js'
 import incidentRoutes from './routes/incidentRoutes.js'
 import promocodeRoutes from './routes/promocodeRoutes.js'
-import { Admin } from './models/adminModel.js';
-import gatherMoreDetails from './utils/webscrapper.js';
-import Plan from './models/planSchema.js';
-import { User } from './models/userModel.js';
 import planRoutes from './routes/planRoutes.js'
 import blogRoutes from './routes/blogRoutes.js'
 import threatFeedRoutes from './routes/threatFeedRoutes.js'
@@ -31,6 +27,7 @@ import threatFeedRoutes from './routes/threatFeedRoutes.js'
 import malwareRoutes from './routes/malwareRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import victimRoutes from './routes/victimsRoutes.js'
+import notificationRoutes from './routes/notificationRoutes.js'
 
 // Initialize app
 dotenv.config(); // Load environment variables
@@ -70,6 +67,7 @@ app.use('/api/v1/threats', threatFeedRoutes);
 app.use('/api/v1/malware', malwareRoutes);
 app.use('/api/v1/victim', victimRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/notification', notificationRoutes);
 
 // Custom error handling middleware
 app.use(errorHandler);

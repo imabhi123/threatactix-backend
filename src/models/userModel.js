@@ -58,6 +58,10 @@ const userSchema = new Schema(
     payments: {
       type: Array
     },
+    count:{
+      type:Number,
+      default:0
+    },
     status: {
       type: Boolean,
       default: true

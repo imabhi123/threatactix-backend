@@ -16,7 +16,8 @@ router.post('/incidentss/d/getMostAffectedCountries', incidentController.getMost
 router.post('/incidents/getMostActiveThreatActors', incidentController.getMostActiveThreatActors);
 router.post('/incidents/getMostTargetedIndustries', incidentController.getMostTargetedIndustries);
 
-router.get('/incidents', incidentController.getAllIncidents);
+router.post('/incidentsss', incidentController.getAllIncidents);
+router.get('/get-controller-count',incidentController.getUsersByActivity);
 
 // Ensure /incidents/:id comes after /search
 router.get('/incidents/:id', incidentController.getIncidentById);
