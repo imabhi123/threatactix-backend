@@ -3,80 +3,6 @@ import jwt from "jsonwebtoken";
 import Incident from "../models/IncidentSchema.js";
 import { User } from "../models/userModel.js";
 
-// Login Controller
-// export const loginAdmin = async (req, res) => {
-//   const { username, password } = req.body;
-//   console.log(username, password);
-
-//   // Check if username and password are provided
-//   if (!username || !password) {
-//     return res
-//       .status(400)
-//       .json({ message: "Username and password are required" });
-//   }
-
-//   try {
-//     // Find admin by username
-//     let admin = await Admin.findOne({ username });
-
-//     // If admin doesn't exist, create a new admin
-//     if (!admin) {
-//       console.log("--> Admin not found, creating a new one");
-
-//       // Create new admin (password will be hashed by the pre-save hook)
-//       const newAdmin = new Admin({
-//         username,
-//         password, // Just pass the plain password, it will be hashed automatically
-//       });
-
-//       // admin = newAdmin;
-
-//       // Save the new admin to the database
-//       await newAdmin.save();
-
-//       // After creating the new admin, log in successfully
-//       const accessToken = admin.generateAccessToken();
-//       const refreshToken = admin.generateRefreshToken();
-//       admin.refreshToken = refreshToken;
-
-//       await admin.save();
-
-//       // Return success message with tokens
-//       return res.status(200).json({
-//         accessToken,
-//         refreshToken,
-//         message: "Admin created and logged in successfully",
-//       });
-//     }
-
-//     // If admin exists, check if the password is correct
-//     const isPasswordValid = await admin.isPasswordCorrect(password);
-//     if (!isPasswordValid) {
-//       return res.status(401).json({ message: "Invalid credentials" });
-//     }
-
-//     // Generate access token
-//     const accessToken = admin.generateAccessToken();
-
-//     // Generate refresh token
-//     const refreshToken = admin.generateRefreshToken();
-
-//     // Save refresh token to the admin document in the database
-//     admin.refreshToken = refreshToken;
-//     await admin.save();
-
-//     // Send tokens as a response
-//     res.status(200).json({
-//       accessToken,
-//       refreshToken,
-//       message: "Login successful",
-//     });
-//   } catch (error) {
-//     console.error("Login error: ", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
 export const loginAdmin = async (req, res) => {
   const { username, password } = req.body;
 
@@ -328,6 +254,7 @@ export const getTableHeadings = async (req, res) => {
     });
   }
 };
+
 export const getMalwareTableHeadings = async (req, res) => {
   const { userId } = req.body;
 

@@ -167,8 +167,6 @@ export const changeUserStatus = async (req, res) => {
   }
 };
 
-
-
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -267,7 +265,6 @@ const googleLoginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 const logoutUser = asyncHandler(async (req, res) => {
   console.log(req.user._id, "abhishek");
   await User.findByIdAndUpdate(
@@ -355,40 +352,6 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-// const purchasePlan = async (req, res) => {
-//   const { userId, planId, formData } = req.body;
-
-//   try {
-//     console.log(req.body);
-
-//     // Find the user and plan
-//     const user = await User.findById(userId);
-//     const plan = await Plan.findById(planId);
-//     console.log(user);
-
-//     // Validate user and plan existence
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     if (!plan) {
-//       return res.status(404).json({ message: "Plan not found" });
-//     }
-
-//     // Push the new formData into the payments array
-//     user.payments.push(formData);
-
-//     // Update user's plan and payments
-//     user.plan = planId;
-//     await user.save();
-
-//     res.status(200).json({ message: "Plan purchased successfully", user });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "An error occurred while purchasing the plan", error: error.message });
-//   }
-// };
-
 const purchasePlan = async (req, res) => {
   const { userId, planId, formData,duration } = req.body;
   console.log(duration);
@@ -438,7 +401,6 @@ const purchasePlan = async (req, res) => {
       .json({ message: "An error occurred while purchasing the plan", error: error.message });
   }
 };
-
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select(

@@ -352,6 +352,7 @@ export const createIncidentByUploadingFile = async (req, res) => {
 export const updateRowData = async (req, res) => {
   try {
     const { userId, incidentId, rowData } = req.body;
+    console.log(req.body);
 
     // Check if the incident exists
     const incident = await Incident.findById(incidentId);

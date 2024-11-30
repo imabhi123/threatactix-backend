@@ -65,7 +65,6 @@ export const getUserNotifications = async (req, res, next) => {
   }
 };
 
-
 // Mark a notification as read
 export const markNotificationAsRead = async (req, res, next) => {
   try {
