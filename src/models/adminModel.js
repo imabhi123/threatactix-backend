@@ -15,6 +15,10 @@ const adminSchema = new Schema(
       type: String,
       required: [true, "Password is required"],
     },
+    role:{
+      type:String,
+      default:"admin"
+    },
     tableHeadings:{
       type:[String],
       required:false

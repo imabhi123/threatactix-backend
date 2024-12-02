@@ -11,10 +11,15 @@ export default class EmailAuth {
             }
         });
 
-        this.otpStore = new Map(); // Temporary store
+        this.otpStore = new Map(); // Temporary store for OTPs
+        this.resetPasswordStore = new Map(); 
     }
 
     generateOTP() {
+        return crypto.randomInt(100000, 999999).toString();
+    }
+
+    generateResetCode() {
         return crypto.randomInt(100000, 999999).toString();
     }
 
@@ -46,7 +51,8 @@ export default class EmailAuth {
         }
     }
 
-    verifyOTP(userEmail, providedOTP) {
+    // Awaiting the result here
+    async verifyOTP(userEmail, providedOTP) {
         const storedData = this.otpStore.get(userEmail);
 
         if (!storedData) {
@@ -64,6 +70,59 @@ export default class EmailAuth {
 
         this.otpStore.delete(userEmail);
         return { valid: true, message: 'OTP verified successfully' };
+    }
+
+    async sendResetPasswordCode(userEmail) {
+        try {
+            const resetCode = this.generateResetCode();
+
+            this.resetPasswordStore.set(userEmail, {
+                code: resetCode,
+                expiry: Date.now() + 10 * 60 * 1000 // 10 minutes
+            });
+
+            const mailOptions = {
+                from: 'iamabhi7853@gmail.com',
+                to: userEmail,
+                subject: 'Password Reset Code',
+                html: `
+                    <h1>Password Reset Request</h1>
+                    <p>Hi,</p>
+                    <p>You requested to reset your password. Use the code below to reset it:</p>
+                    <p><strong>${resetCode}</strong></p>
+                    <p>This code will expire in 10 minutes. If you did not request a password reset, please ignore this email.</p>
+                `
+            };
+
+            await this.transporter.sendMail(mailOptions);
+            console.log('Reset password code sent successfully.');
+            return true;
+        } catch (error) {
+            console.error('Error sending reset password code:', error);
+            throw error;
+        }
+    }
+
+    async verifyResetPasswordCode(userEmail, providedCode) {
+        console.log(userEmail,providedCode)
+        const storedData = this.resetPasswordStore.get(userEmail);
+        console.log(storedData)
+
+        if (!storedData) {
+            return { valid: false, message: 'No reset code found for this email' };
+        }
+
+        if (Date.now() > storedData.expiry) {
+            this.resetPasswordStore.delete(userEmail);
+            return { valid: false, message: 'Reset code has expired' };
+        }
+
+        if (storedData.code !== providedCode) {
+            return { valid: false, message: 'Invalid reset code' };
+        }
+
+        this.resetPasswordStore.delete(userEmail);
+        return { valid: true, message: 'Reset code verified successfully' };
     }
 
     async sendPurchaseConfirmation(userEmail, planDetails) {
@@ -108,5 +167,4 @@ export default class EmailAuth {
             throw error;
         }
     }
-
 }
