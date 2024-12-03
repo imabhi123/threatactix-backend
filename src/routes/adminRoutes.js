@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { getAllUsers, getIncidents, getMalwareTableHeadings, getProfile, getTableHeadings, getVictimTableHeadings, incidentStatusUpdate, loginAdmin, updateMalwareTableHeading, updateTableHeading, updateVictimTableHeading } from "../controllers/adminController.js";
+import { getAllUsers, getIncidents, getMalwareTableHeadings, getProfile, getTableHeadings, getVictimTableHeadings, incidentStatusUpdate, loginAdmin, signupAdmin, updateMalwareTableHeading, updateTableHeading, updateVictimTableHeading } from "../controllers/adminController.js";
 import { updateMalwareRowData, updateRowData, updateVictimRowData } from "../controllers/incidentController.js";
 
 const router = Router();
 
 router.route("/login").post(loginAdmin);
+router.route("/signup").post(signupAdmin);
 router.route("/profile").post(getProfile);
 router.route("/get-incidents").get(getIncidents);
 router.route("/status-update").put(incidentStatusUpdate);

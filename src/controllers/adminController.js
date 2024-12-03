@@ -6,7 +6,6 @@ import { User } from "../models/userModel.js";
 export const loginAdmin = async (req, res) => {
   const { username, password } = req.body;
 
-  // Check if username and password are provided
   if (!username || !password) {
     return res
       .status(400)
@@ -14,52 +13,26 @@ export const loginAdmin = async (req, res) => {
   }
 
   try {
-    // Find admin by username
-    let admin = await Admin.findOne({ username });
+    const admin = await Admin.findOne({ username });
 
-    // If admin doesn't exist, create a new admin
+    // Check if admin exists
     if (!admin) {
-      console.log("--> Admin not found, creating a new one");
-
-      // Create new admin (password will be hashed by the pre-save hook)
-      admin = new Admin({
-        username,
-        password, // Pass the plain password; it will be hashed automatically
-      });
-
-      // Save the new admin to the database
-      await admin.save();
-
-      // Generate tokens for the new admin
-      const accessToken = admin.generateAccessToken();
-      const refreshToken = admin.generateRefreshToken();
-      admin.refreshToken = refreshToken;
-
-      await admin.save();
-
-      // Return success message with tokens
-      return res.status(200).json({
-        accessToken,
-        refreshToken,
-        admin,
-        message: "Admin created and logged in successfully",
-      });
+      return res.status(404).json({ message: "Admin not found" });
     }
 
-    // If admin exists, check if the password is correct
+    // Verify password
     const isPasswordValid = await admin.isPasswordCorrect(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate tokens for existing admin
+    // Generate tokens for the admin
     const accessToken = admin.generateAccessToken();
     const refreshToken = admin.generateRefreshToken();
 
     // Save the refresh token to the admin document in the database
     admin.refreshToken = refreshToken;
     await admin.save();
-    console.log(admin);
 
     // Send tokens as a response
     res.status(200).json({
@@ -70,6 +43,53 @@ export const loginAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error: ", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const signupAdmin = async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username and password are required" });
+  }
+
+  try {
+    const existingAdmin = await Admin.findOne({ username });
+
+    // Check if the admin already exists
+    if (existingAdmin) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
+
+    // Create a new admin
+    const admin = new Admin({
+      username,
+      password, // Password will be hashed automatically by pre-save hook
+    });
+
+    // Save the new admin to the database
+    await admin.save();
+
+    // Generate tokens for the new admin
+    const accessToken = admin.generateAccessToken();
+    const refreshToken = admin.generateRefreshToken();
+
+    // Save the refresh token to the admin document in the database
+    admin.refreshToken = refreshToken;
+    await admin.save();
+
+    // Return success message with tokens
+    res.status(201).json({
+      accessToken,
+      refreshToken,
+      admin,
+      message: "Admin created successfully",
+    });
+  } catch (error) {
+    console.error("Signup error: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
