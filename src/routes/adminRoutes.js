@@ -21,3 +21,4 @@ router.route('/update-victim-rowdata').put(updateVictimRowData);
 router.route('/get-all-users').get(getAllUsers);
 
 export default router;
+ 

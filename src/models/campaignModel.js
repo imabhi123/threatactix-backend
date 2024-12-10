@@ -20,7 +20,7 @@ const campaignSchema = new Schema(
     attacksCount: {
       type: Number,
       required: [true, "Number of attacks is required"],
-      min: [0, "Attacks count cannot be negative"],
+      min: [0, "C2 Collection Count cannot be negative"],
       default: 0,
       index: true,
     },
