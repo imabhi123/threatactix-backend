@@ -47,6 +47,18 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
+export const getListAdmins=async(req,res)=>{
+  try {
+    const data=await Admin.find();
+    res.status(201).json({
+      data,
+      message: "Admin list fetched successfully",
+    });
+  } catch (error) {
+    
+  }
+}
+
 export const signupAdmin = async (req, res) => {
   const { username, password } = req.body;
 
@@ -270,6 +282,73 @@ export const getTableHeadings = async (req, res) => {
     // Handle any unexpected errors
     res.status(500).json({
       message: "An error occurred while retrieving the table headings.",
+      error: error.message,
+    });
+  }
+};
+
+export const updateColumnMappings = async (req, res) => {
+  try {
+    const { userId, mappings } = req.body;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    // Validate mappings
+    if (!mappings || typeof mappings !== "object") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid mappings provided",
+      });
+    }
+
+    const admin = await Admin.findById(userId);
+
+    // Check if admin exists
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    // Validate mapping values for uniqueness
+    const mappingValues = Object.values(mappings);
+    const uniqueValues = new Set(mappingValues);
+
+    if (uniqueValues.size !== mappingValues.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Mapping indices must be unique",
+      });
+    }
+
+    // Sanitize keys to replace invalid characters (e.g., '.')
+    const sanitizedMappings = {};
+    for (const key in mappings) {
+      const sanitizedKey = key.replace(/\./g, "_"); // Replace '.' with '_'
+      sanitizedMappings[sanitizedKey] = mappings[key];
+    }
+
+    // Update mappings in the admin document
+    admin.mappings = sanitizedMappings;
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      data: sanitizedMappings,
+      message: "Column mappings updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating column mappings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
       error: error.message,
     });
   }

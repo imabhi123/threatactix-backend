@@ -19,6 +19,11 @@ const adminSchema = new Schema(
       type:String,
       default:"admin"
     },
+    mappings: {
+      type: Map, // Allows flexible key-value mappings
+      of: Number, // Mapping to index numbers
+      default: {}
+    },
     tableHeadings:{
       type:[String],
       required:false

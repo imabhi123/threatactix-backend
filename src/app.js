@@ -77,8 +77,8 @@ app.get('/', (req, res) => {
   res.send('Welcome to the Threat Intelligence Platform API');
 });
 
-// Start the server
+// Start the server 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT,'0.0.0.0', () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
