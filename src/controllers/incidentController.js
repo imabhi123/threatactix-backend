@@ -509,29 +509,56 @@ const getUsersByActivity = async (req, res) => {
 
 export const getIncidentsById = async (req, res) => {
   try {
-    // Extract start, end, and category from the query parameters, and userId from the body
-    const { start = 0, end = 10, category } = req.query;
+    // Extract start, end, category, startDate, and endDate from the query parameters, and userId from the body
+    const { start = 0, end = 10, category, startDate, endDate } = req.query;
     const { userId } = req.body;
-    console.log(userId);
 
     // Ensure that start and end are integers
     const startIndex = parseInt(start);
     const endIndex = parseInt(end);
 
-    const incidents = await Incident.find({ creator: userId });
+    // Build the query object
+    const query = { creator: userId };
+
+    // Add date filtering if startDate and endDate are provided
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    // Add category filter if provided
+    if (category) {
+      query.category = category;
+    }
+
+    // Fetch incidents based on the query
+    const incidents = await Incident.find(query)
+      .skip(startIndex)
+      .limit(endIndex - startIndex);
+
+    // Fetch the total count for pagination
+    const totalCount = await Incident.countDocuments(query);
+
+    // Respond with data and pagination information
     res.status(200).json({
       success: true,
       data: incidents,
       pagination: {
         start: startIndex,
         end: endIndex,
-        count: 20, // Total number of incidents matching the query
+        count: totalCount,
       },
     });
   } catch (error) {
     handleServerError(res, error, "Error retrieving incidents");
   }
 };
+
 
 export const deleteMultipleIncidents = async (req, res) => {
   try {
