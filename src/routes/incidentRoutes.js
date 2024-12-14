@@ -1,5 +1,5 @@
 import express from 'express';
-import incidentController from '../controllers/incidentController.js';
+import incidentController, { deleteMultipleIncidents } from '../controllers/incidentController.js';
 import { upload } from '../middlewares/multer.middleware.js';
 
 const router = express.Router();
@@ -18,7 +18,7 @@ router.post('/incidents/getMostTargetedIndustries', incidentController.getMostTa
 
 router.post('/incidentsss', incidentController.getAllIncidents);
 router.get('/get-controller-count',incidentController.getUsersByActivity);
-
+router.delete("/incidents", deleteMultipleIncidents);
 // Ensure /incidents/:id comes after /search
 router.get('/incidents/:id', incidentController.getIncidentById);
 router.put('/incidents/:id', incidentController.updateIncident);

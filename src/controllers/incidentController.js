@@ -533,6 +533,45 @@ export const getIncidentsById = async (req, res) => {
   }
 };
 
+export const deleteMultipleIncidents = async (req, res) => {
+  try {
+    // Extract IDs from the request body
+    const { ids } = req.body;
+
+    // Validate that IDs are provided and in the correct format
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of incident IDs to delete.",
+      });
+    }
+
+    // Perform deletion
+    const result = await Incident.deleteMany({ _id: { $in: ids } });
+
+    // Check if any documents were deleted
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No incidents found with the provided IDs.",
+      });
+    }
+
+    // Success response
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} incidents deleted successfully.`,
+    });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while deleting incidents.",
+      error: error.message,
+    });
+  }
+};
+
 // Get a single Incident by ID
 export const getIncidentById = async (req, res) => {
   try {
