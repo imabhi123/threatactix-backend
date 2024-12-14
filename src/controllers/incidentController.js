@@ -537,6 +537,7 @@ export const deleteMultipleIncidents = async (req, res) => {
   try {
     // Extract IDs from the request body
     const { ids } = req.body;
+    console.log(ids)
 
     // Validate that IDs are provided and in the correct format
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
