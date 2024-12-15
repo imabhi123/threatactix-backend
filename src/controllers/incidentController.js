@@ -19,60 +19,6 @@ const handleServerError = (res, error, message) => {
   res.status(500).json({ message, error });
 };
 
-
-
-// export const createFuncUtil = async (data,arr) => {
-//   try {
-//     // Destructure the necessary fields from the request body
-//     const {
-//       title,
-//       url,
-//       threatActor,
-//       rawContent,
-//       publicationDate,
-//       plannedPublicationDate,
-//       category,
-//       network,
-//       victims,
-//       images,
-//     } = data;
-
-//     // Validate that required fields are provided
-//     if (!title || !url || !threatActor || !rawContent || !publicationDate || !category || !network || !victims) {
-//       arr.push('error');
-//       return;
-//       // return res.status(400).json({ message: 'Missing required fields' });
-//     }
-
-//     // Create a new Incident instance
-//     const newIncident = new Incident({
-//       title,
-//       url,
-//       threatActor,
-//       rawContent,
-//       publicationDate,
-//       plannedPublicationDate, // Optional
-//       category,
-//       network,
-//       victims,
-//       images, // Optional
-//     });
-
-//     // Save the incident to the database
-//     await newIncident.save();
-//     arr.push('success')
-
-//     // Return success response
-//     // return res.status(201).json({ message: 'Incident created successfully', incident: newIncident });
-//   } catch (error) {
-//     // Handle any errors that occur during the process
-//     console.error('Error creating incident:', error);
-//     return res.status(500).json({ message: 'Server error, could not create incident' });
-//   }
-// };
-
-// Create a new Incident
-
 export const createFuncUtil = async (data, userId, headingsArray) => {
   try {
     const newExcelData = new Incident({
@@ -194,54 +140,12 @@ export const deleteIncident = async (req, res) => {
   }
 };
 
-// export const createIncidentByUploadingFile= async (req, res) => {
-//   try {
-//     const file = req.file;
-//     console.log(file)
-//     if (!file) {
-//       return res.status(400).send('No file uploaded.');
-//     }
-
-//     const ext = path.extname(file.originalname).toLowerCase();
-//     const validExtensions = ['.xlsx', '.xls', '.csv'];
-//     if (!validExtensions.includes(ext)) {
-//       return res.status(400).send('Invalid file type. Upload only Excel or CSV files.');
-//     }
-
-//     const filePath = path.join(__dirname, '../..','uploads', file.filename);
-
-//     // Parse the file based on its type
-//     const extractedData = await parseFile(filePath, ext);
-//     for(let i=0;i<extractedData?.length;i++){
-//       extractedData[i]=transformIncidentData(extractedData[i]);
-//     }
-
-//     const arr=[];
-//     for(let i=0;i<extractedData.length;i++){
-//       await createFuncUtil(extractedData[i],arr);
-//     }
-
-//     res.status(200).json({
-//       message: 'File processed successfully!',
-//       data: {extractedData,arr},
-//     });
-
-//     // Clean up the file after processing
-//     fs.unlinkSync(filePath);
-
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Error processing file.');
-//   }
-// }
-
-// Get all Incidents
 
 // export const createIncidentByUploadingFile = async (req, res) => {
 //   try {
 //     const file = req.file;
 //     const { userId } = req.body;
-//     // console.log("abhishek", userId,req.body);
+
 //     if (!file) {
 //       return res.status(400).send("No file uploaded.");
 //     }
@@ -262,17 +166,18 @@ export const deleteIncident = async (req, res) => {
 //     const transformedData = extractedData.map(transformIncidentData);
 
 //     const headingsArray = [];
-//     // Save each row as a document in the database
 //     await Promise.all(
 //       transformedData.map(async (rowData, index) => {
 //         if (index === 0) {
 //           rowData?.row.forEach((value, key) => {
-//             headingsArray.push(convertToNaturalLanguage(key));
+//             headingsArray.push(key);
 //           });
-//           const admin = await Admin.findByIdAndUpdate(
-//             userId, // use userId as the document's _id
-//             { tableHeadings: headingsArray }, // update tableHeadings
-//             { new: true } // return the updated document
+
+//           // Update the heading only if tableHeadings is empty
+//           const admin = await Admin.findOneAndUpdate(
+//             { _id: userId, tableHeadings: { $exists: true, $size: 0 } },
+//             { tableHeadings: headingsArray },
+//             { new: true }
 //           );
 //         }
 //         await createFuncUtil(rowData, userId);
@@ -291,16 +196,26 @@ export const deleteIncident = async (req, res) => {
 //     res.status(500).send("Error processing file.");
 //   }
 // };
+function sanitizeKeys(obj) {
+  const sanitized = {};
+  for (const key in obj) {
+    const sanitizedKey = key.replace(/\./g, "_"); // Replace dots with underscores
+    sanitized[sanitizedKey] = obj[key];
+  }
+  return sanitized;
+}
 
 export const createIncidentByUploadingFile = async (req, res) => {
   try {
     const file = req.file;
     const { userId } = req.body;
 
+    // Check if file exists
     if (!file) {
       return res.status(400).send("No file uploaded.");
     }
 
+    // Validate file extension
     const ext = path.extname(file.originalname).toLowerCase();
     const validExtensions = [".xlsx", ".xls", ".csv"];
     if (!validExtensions.includes(ext)) {
@@ -311,26 +226,37 @@ export const createIncidentByUploadingFile = async (req, res) => {
 
     const filePath = path.join(__dirname, "../..", "uploads", file.filename);
 
-    // Parse the file based on its type
+    // Parse the file
     const extractedData = await parseFile(filePath, ext);
+    console.log(extractedData[0], "---> Extracted Data");
 
-    const transformedData = extractedData.map(transformIncidentData);
+    // Sanitize and transform the data
+    const transformedData = extractedData.map((rowData) => ({
+      row: sanitizeKeys(rowData), // Sanitize keys
+    }));
+
+    // console.log(transformedData[0], "---> Transformed Data");
 
     const headingsArray = [];
+
+    // Process each row
     await Promise.all(
       transformedData.map(async (rowData, index) => {
         if (index === 0) {
-          rowData?.row.forEach((value, key) => {
+          // Extract headings only from the first row
+          for (const key of Object.keys(rowData.row)) {
             headingsArray.push(key);
-          });
+          }
 
-          // Update the heading only if tableHeadings is empty
-          const admin = await Admin.findOneAndUpdate(
+          // Update the Admin tableHeadings field only if empty
+          await Admin.findOneAndUpdate(
             { _id: userId, tableHeadings: { $exists: true, $size: 0 } },
             { tableHeadings: headingsArray },
             { new: true }
           );
         }
+
+        // Save each row using the utility function
         await createFuncUtil(rowData, userId);
       })
     );
@@ -359,7 +285,6 @@ export const updateRowData = async (req, res) => {
     if (!incident) {
       return res.status(404).json({ message: "Incident not found" });
     }
-
     // Update the single row data
     const updatedIncident = await Incident.findByIdAndUpdate(
       incidentId,
