@@ -141,81 +141,15 @@ export const deleteIncident = async (req, res) => {
 };
 
 
-// export const createIncidentByUploadingFile = async (req, res) => {
-//   try {
-//     const file = req.file;
-//     const { userId } = req.body;
-
-//     if (!file) {
-//       return res.status(400).send("No file uploaded.");
-//     }
-
-//     const ext = path.extname(file.originalname).toLowerCase();
-//     const validExtensions = [".xlsx", ".xls", ".csv"];
-//     if (!validExtensions.includes(ext)) {
-//       return res
-//         .status(400)
-//         .send("Invalid file type. Upload only Excel or CSV files.");
-//     }
-
-//     const filePath = path.join(__dirname, "../..", "uploads", file.filename);
-
-//     // Parse the file based on its type
-//     const extractedData = await parseFile(filePath, ext);
-
-//     const transformedData = extractedData.map(transformIncidentData);
-
-//     const headingsArray = [];
-//     await Promise.all(
-//       transformedData.map(async (rowData, index) => {
-//         if (index === 0) {
-//           rowData?.row.forEach((value, key) => {
-//             headingsArray.push(key);
-//           });
-
-//           // Update the heading only if tableHeadings is empty
-//           const admin = await Admin.findOneAndUpdate(
-//             { _id: userId, tableHeadings: { $exists: true, $size: 0 } },
-//             { tableHeadings: headingsArray },
-//             { new: true }
-//           );
-//         }
-//         await createFuncUtil(rowData, userId);
-//       })
-//     );
-
-//     res.status(200).json({
-//       message: "File processed successfully!",
-//       data: transformedData,
-//     });
-
-//     // Clean up the file after processing
-//     fs.unlinkSync(filePath);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send("Error processing file.");
-//   }
-// };
-function sanitizeKeys(obj) {
-  const sanitized = {};
-  for (const key in obj) {
-    const sanitizedKey = key.replace(/\./g, "_"); // Replace dots with underscores
-    sanitized[sanitizedKey] = obj[key];
-  }
-  return sanitized;
-}
-
 export const createIncidentByUploadingFile = async (req, res) => {
   try {
     const file = req.file;
     const { userId } = req.body;
 
-    // Check if file exists
     if (!file) {
       return res.status(400).send("No file uploaded.");
     }
 
-    // Validate file extension
     const ext = path.extname(file.originalname).toLowerCase();
     const validExtensions = [".xlsx", ".xls", ".csv"];
     if (!validExtensions.includes(ext)) {
@@ -226,37 +160,26 @@ export const createIncidentByUploadingFile = async (req, res) => {
 
     const filePath = path.join(__dirname, "../..", "uploads", file.filename);
 
-    // Parse the file
+    // Parse the file based on its type
     const extractedData = await parseFile(filePath, ext);
-    console.log(extractedData[0], "---> Extracted Data");
 
-    // Sanitize and transform the data
-    const transformedData = extractedData.map((rowData) => ({
-      row: sanitizeKeys(rowData), // Sanitize keys
-    }));
-
-    // console.log(transformedData[0], "---> Transformed Data");
+    const transformedData = extractedData.map(transformIncidentData);
 
     const headingsArray = [];
-
-    // Process each row
     await Promise.all(
       transformedData.map(async (rowData, index) => {
         if (index === 0) {
-          // Extract headings only from the first row
-          for (const key of Object.keys(rowData.row)) {
+          rowData?.row.forEach((value, key) => {
             headingsArray.push(key);
-          }
+          });
 
-          // Update the Admin tableHeadings field only if empty
-          await Admin.findOneAndUpdate(
+          // Update the heading only if tableHeadings is empty
+          const admin = await Admin.findOneAndUpdate(
             { _id: userId, tableHeadings: { $exists: true, $size: 0 } },
             { tableHeadings: headingsArray },
             { new: true }
           );
         }
-
-        // Save each row using the utility function
         await createFuncUtil(rowData, userId);
       })
     );
@@ -273,6 +196,83 @@ export const createIncidentByUploadingFile = async (req, res) => {
     res.status(500).send("Error processing file.");
   }
 };
+// function sanitizeKeys(obj) {
+//   const sanitized = {};
+//   for (const key in obj) {
+//     const sanitizedKey = key.replace(/\./g, "_"); // Replace dots with underscores
+//     sanitized[sanitizedKey] = obj[key];
+//   }
+//   return sanitized;
+// }
+
+// export const createIncidentByUploadingFile = async (req, res) => {
+//   try {
+//     const file = req.file;
+//     const { userId } = req.body;
+
+//     // Check if file exists
+//     if (!file) {
+//       return res.status(400).send("No file uploaded.");
+//     }
+
+//     // Validate file extension
+//     const ext = path.extname(file.originalname).toLowerCase();
+//     const validExtensions = [".xlsx", ".xls", ".csv"];
+//     if (!validExtensions.includes(ext)) {
+//       return res
+//         .status(400)
+//         .send("Invalid file type. Upload only Excel or CSV files.");
+//     }
+
+//     const filePath = path.join(__dirname, "../..", "uploads", file.filename);
+
+//     // Parse the file
+//     const extractedData = await parseFile(filePath, ext);
+//     console.log(extractedData[0], "---> Extracted Data");
+
+//     // Sanitize and transform the data
+//     const transformedData = extractedData.map((rowData) => ({
+//       row: sanitizeKeys(rowData), // Sanitize keys
+//     }));
+
+//     // console.log(transformedData[0], "---> Transformed Data");
+
+//     const headingsArray = [];
+
+//     // Process each row
+//     await Promise.all(
+//       transformedData.map(async (rowData, index) => {
+//         if (index === 0) {
+//           // Extract headings only from the first row
+//           for (const key of Object.keys(rowData.row)) {
+//             headingsArray.push(key);
+//           }
+
+//           // Update the Admin tableHeadings field only if empty
+//           await Admin.findOneAndUpdate(
+//             { _id: userId, tableHeadings: { $exists: true, $size: 0 } },
+//             { tableHeadings: headingsArray },
+//             { new: true }
+//           );
+//         }
+
+//         // Save each row using the utility function
+//         await createFuncUtil(rowData, userId);
+//       })
+//     );
+
+//     res.status(200).json({
+//       message: "File processed successfully!",
+//       data: transformedData,
+//     });
+
+//     // Clean up the file after processing
+//     fs.unlinkSync(filePath);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error processing file.");
+//   }
+// };
 
 
 export const updateRowData = async (req, res) => {
